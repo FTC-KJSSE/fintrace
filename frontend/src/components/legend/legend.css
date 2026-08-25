@@ -1,0 +1,31 @@
+.legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.low {
+  background: var(--latency-low);
+}
+.legend-dot.medium {
+  background: var(--latency-medium);
+}
+.legend-dot.high {
+  background: var(--latency-high);
+}

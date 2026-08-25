@@ -1,0 +1,43 @@
+.compare-slots {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.compare-slot {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  padding: 8px 12px;
+  min-width: 160px;
+}
+
+.compare-slot:focus {
+  outline: none;
+  border-color: var(--accent-amber);
+}
+
+.compare-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.compare-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.compare-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinTrace — Live Network Latency Globe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/layout.css" />
+    <link rel="stylesheet" href="/src/styles/utilities.css" />
+    <link rel="stylesheet" href="/src/components/navbar/navbar.css" />
+    <link rel="stylesheet" href="/src/components/ticker/ticker.css" />
+    <link rel="stylesheet" href="/src/components/hero/hero.css" />
+    <link rel="stylesheet" href="/src/components/globe/globe.css" />
+    <link rel="stylesheet" href="/src/components/panel/panel.css" />
+    <link rel="stylesheet" href="/src/components/legend/legend.css" />
+    <link rel="stylesheet" href="/src/components/compare/compare.css" />
+  </head>
+  <body>
+    <nav class="navbar" id="navbar">
+      <div class="container">
+        <ul class="nav-links">
+          <li>
+            <button class="nav-mode active" data-mode="single">Single</button>
+          </li>
+          <li>
+            <button class="nav-mode" data-mode="live">Live</button>
+          </li>
+          <li>
+            <button class="nav-mode" data-mode="compare">Compare</button>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="ticker-tape" id="ticker">
+      <div class="ticker-track" id="ticker-track">
+        <!-- populated by ticker.js -->
+      </div>
+    </div>
+
+    <header class="hero">
+      <div class="hero-content">
+        <div class="hero-logo" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="16" stroke="var(--text-secondary)" stroke-width="1.5" opacity="0.5" />
+            <ellipse cx="24" cy="24" rx="16" ry="6" stroke="var(--text-secondary)" stroke-width="1" opacity="0.3" />
+            <path d="M8 24 Q24 4 40 24" stroke="var(--accent-amber)" stroke-width="2" stroke-linecap="round" />
+            <circle cx="8" cy="24" r="2.5" fill="var(--accent-amber)" />
+            <circle cx="40" cy="24" r="2.5" fill="var(--latency-low)" />
+          </svg>
+        </div>
+        <h1 class="hero-title">Fin<span class="amber">Trace</span></h1>
+        <p class="hero-tagline" id="hero-tagline">
+          Visualizing network proximity to global financial infrastructure<span class="cursor"></span>
+        </p>
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-number">9</div>
+            <div class="stat-label">Endpoints Tracked</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">SSE</div>
+            <div class="stat-label">Live Hop Streaming</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">3</div>
+            <div class="stat-label">Compare Slots</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="container">
+        <section class="controls-bar" id="controls">
+          <div class="control-group" id="single-controls">
+            <select class="endpoint-select" id="endpoint-select"></select>
+            <span class="control-or">or</span>
+            <input
+              class="host-input"
+              id="host-input"
+              type="text"
+              placeholder="custom hostname / IP"
+              spellcheck="false"
+            />
+            <button class="run-btn" id="run-btn">Run Trace →</button>
+          </div>
+          <div class="control-group compare-controls" id="compare-controls" hidden>
+            <div class="compare-slots" id="compare-slots"></div>
+            <button class="run-btn" id="compare-run-btn">Compare →</button>
+          </div>
+        </section>
+
+        <section class="globe-panel-layout">
+          <div class="globe-container" id="globe"></div>
+          <aside class="side-panel">
+            <div class="legend" id="legend">
+              <div class="legend-item">
+                <span class="legend-dot low"></span>
+                <span class="legend-label">&lt; 50 ms</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot medium"></span>
+                <span class="legend-label">50–150 ms</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot high"></span>
+                <span class="legend-label">&gt; 150 ms</span>
+              </div>
+            </div>
+            <div class="panel-header">
+              <span class="panel-title" id="panel-title">Awaiting trace…</span>
+            </div>
+            <div class="hop-table" id="hop-table"></div>
+          </aside>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <span>FinTrace — built for the Fintech Club</span>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

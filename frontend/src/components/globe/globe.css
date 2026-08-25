@@ -1,0 +1,12 @@
+.globe-container {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  min-height: 460px;
+  position: relative;
+  overflow: hidden;
+}
+
+.globe-container canvas {
+  display: block;
+}

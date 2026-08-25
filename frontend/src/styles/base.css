@@ -1,0 +1,111 @@
+/* ---------- CSS Custom Properties ---------- */
+:root {
+  /* Backgrounds — layered navy, darkest at the base */
+  --bg-primary: #0a0f1a;
+  --bg-secondary: #0f1623;
+  --bg-surface: #141c2b;
+  --bg-card: #1a2332;
+  --bg-card-hover: #202b3d;
+
+  /* Brand accent — amber, per the project's own "Bloomberg terminal" identity */
+  --accent-amber: #f0a830;
+  --accent-amber-light: #ffc35c;
+  --accent-amber-dim: rgba(240, 168, 48, 0.12);
+
+  /* Latency scale — fixed semantic meaning, not decorative */
+  --latency-low: #22c55e;
+  --latency-medium: #f0a830;
+  --latency-high: #ef4444;
+
+  /* Text */
+  --text-primary: #e8eaed;
+  --text-secondary: #b7bdc4;
+  --text-muted: #8e959d;
+  --text-link: #8ab4f8;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.2);
+
+  /* Fonts */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Space Mono", "Fira Code", monospace;
+
+  /* Layout */
+  --container-max: 1200px;
+  --section-gap: 48px;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms var(--ease-out-expo);
+
+  /* Shadows — deliberately restrained, no neon glow */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+a:hover {
+  color: var(--accent-amber-light);
+}
+
+img,
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 24px;
+}
