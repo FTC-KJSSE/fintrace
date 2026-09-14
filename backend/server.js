@@ -10,7 +10,16 @@ import { initSse, sendSse, startHeartbeat } from "./src/sse.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DEFAULT_STATIC_DIR = path.resolve(__dirname, "../frontend/dist");
+
+function getStaticDir() {
+  const directPath = path.resolve(__dirname, "../frontend/dist");
+  if (fs.existsSync(directPath)) return directPath;
+  const unpackedPath = directPath.replace("app.asar", "app.asar.unpacked");
+  if (fs.existsSync(unpackedPath)) return unpackedPath;
+  return directPath;
+}
+
+const DEFAULT_STATIC_DIR = getStaticDir();
 
 const DEFAULT_PORT = 3001;
 const DEFAULT_HOST = "127.0.0.1";
@@ -187,9 +196,13 @@ export function createApp(options = {}) {
   const staticDir = options.staticDir ?? DEFAULT_STATIC_DIR;
   if (fs.existsSync(staticDir)) {
     app.use(express.static(staticDir));
-    app.get("*", (req, res, next) => {
+    app.use((req, res, next) => {
       if (req.path.startsWith("/api")) return next();
-      res.sendFile(path.join(staticDir, "index.html"));
+      if (req.method === "GET") {
+        res.sendFile(path.join(staticDir, "index.html"));
+      } else {
+        next();
+      }
     });
   }
 

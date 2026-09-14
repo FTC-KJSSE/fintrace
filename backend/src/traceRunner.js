@@ -39,9 +39,10 @@ export function killChildProcess(child) {
   activeProcesses.delete(child);
   if (process.platform === "win32") {
     try {
-      spawn("taskkill", ["/F", "/T", "/PID", String(child.pid)]).on("error", () => {
+      spawn("taskkill", ["/F", "/T", "/PID", String(child.pid)], { stdio: "ignore" }).on("error", () => {
         child.kill();
       });
+      child.kill();
     } catch {
       child.kill();
     }
