@@ -17,10 +17,18 @@ export function openTrace(target, { onStart, onHop, onDone, onError } = {}) {
     source.close();
   });
   source.addEventListener("error", (e) => {
-    const detail = e.data ? JSON.parse(e.data) : { message: "Connection lost" };
+    let detail = { message: "Connection rejected or lost" };
+    if (e.data) {
+      try {
+        detail = JSON.parse(e.data);
+      } catch {
+        detail = { message: e.data };
+      }
+    }
     onError?.(detail);
     source.close();
   });
 
   return source;
 }
+

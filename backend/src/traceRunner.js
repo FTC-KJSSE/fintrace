@@ -28,11 +28,45 @@ export function parseHopLine(line) {
   return { hopIndex, ip, rttMs, timedOut };
 }
 
+const MAX_HOPS = 20;
+const TIMEOUT_MS_WIN = 1000;
+const TIMEOUT_S_UNIX = 1;
+
+const activeProcesses = new Set();
+
+export function killChildProcess(child) {
+  if (!child || child.killed || child.exitCode !== null) return;
+  activeProcesses.delete(child);
+  if (process.platform === "win32") {
+    try {
+      spawn("taskkill", ["/F", "/T", "/PID", String(child.pid)]).on("error", () => {
+        child.kill();
+      });
+    } catch {
+      child.kill();
+    }
+  } else {
+    child.kill("SIGTERM");
+  }
+}
+
+export function terminateAllTraces() {
+  for (const child of activeProcesses) {
+    killChildProcess(child);
+  }
+  activeProcesses.clear();
+}
+
+// Ensure all spawned trace processes terminate on backend shutdown
+process.on("SIGINT", () => terminateAllTraces());
+process.on("SIGTERM", () => terminateAllTraces());
+process.on("exit", () => terminateAllTraces());
+
 function commandFor(host) {
   if (process.platform === "win32") {
-    return { cmd: "tracert", args: ["-d", host] };
+    return { cmd: "tracert", args: ["-d", "-h", String(MAX_HOPS), "-w", String(TIMEOUT_MS_WIN), host] };
   }
-  return { cmd: "traceroute", args: ["-n", host] };
+  return { cmd: "traceroute", args: ["-n", "-m", String(MAX_HOPS), "-w", String(TIMEOUT_S_UNIX), host] };
 }
 
 /**
@@ -42,6 +76,7 @@ function commandFor(host) {
 export function runTraceroute(host, { onHop, onError, onDone }) {
   const { cmd, args } = commandFor(host);
   const child = spawn(cmd, args);
+  activeProcesses.add(child);
 
   const rl = readline.createInterface({ input: child.stdout });
   rl.on("line", (line) => {
@@ -55,6 +90,7 @@ export function runTraceroute(host, { onHop, onError, onDone }) {
   });
 
   child.on("error", (err) => {
+    activeProcesses.delete(child);
     onError(err.code === "ENOENT" ? new Error(`${cmd} not found on this system`) : err);
   });
 
@@ -68,6 +104,7 @@ export function runTraceroute(host, { onHop, onError, onDone }) {
   function finish() {
     if (settled || !rlClosed || exitCode === null) return;
     settled = true;
+    activeProcesses.delete(child);
     if (exitCode !== 0 && stderrBuf.trim()) {
       onError(new Error(stderrBuf.trim()));
     } else {
@@ -87,3 +124,4 @@ export function runTraceroute(host, { onHop, onError, onDone }) {
 
   return child;
 }
+

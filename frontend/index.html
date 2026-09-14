@@ -3,131 +3,171 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FinTrace — Live Network Latency Globe</title>
+    <title>FinTrace — Live Financial Network Latency Terminal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/src/styles/base.css" />
     <link rel="stylesheet" href="/src/styles/layout.css" />
     <link rel="stylesheet" href="/src/styles/utilities.css" />
-    <link rel="stylesheet" href="/src/components/navbar/navbar.css" />
     <link rel="stylesheet" href="/src/components/ticker/ticker.css" />
-    <link rel="stylesheet" href="/src/components/hero/hero.css" />
     <link rel="stylesheet" href="/src/components/globe/globe.css" />
     <link rel="stylesheet" href="/src/components/panel/panel.css" />
     <link rel="stylesheet" href="/src/components/legend/legend.css" />
     <link rel="stylesheet" href="/src/components/compare/compare.css" />
+    <link rel="stylesheet" href="/src/components/analytics/analytics.css" />
   </head>
   <body>
-    <nav class="navbar" id="navbar">
-      <div class="container">
-        <ul class="nav-links">
-          <li>
-            <button class="nav-mode active" data-mode="single">Single</button>
-          </li>
-          <li>
-            <button class="nav-mode" data-mode="live">Live</button>
-          </li>
-          <li>
-            <button class="nav-mode" data-mode="compare">Compare</button>
-          </li>
-        </ul>
-      </div>
-    </nav>
-
+    <!-- Top Telemetry Ticker Tape -->
     <div class="ticker-tape" id="ticker">
       <div class="ticker-track" id="ticker-track">
         <!-- populated by ticker.js -->
       </div>
     </div>
 
-    <header class="hero">
-      <div class="hero-content">
-        <div class="hero-logo" aria-hidden="true">
-          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="24" cy="24" r="16" stroke="var(--text-secondary)" stroke-width="1.5" opacity="0.5" />
-            <ellipse cx="24" cy="24" rx="16" ry="6" stroke="var(--text-secondary)" stroke-width="1" opacity="0.3" />
-            <path d="M8 24 Q24 4 40 24" stroke="var(--accent-amber)" stroke-width="2" stroke-linecap="round" />
-            <circle cx="8" cy="24" r="2.5" fill="var(--accent-amber)" />
-            <circle cx="40" cy="24" r="2.5" fill="var(--latency-low)" />
-          </svg>
+    <div class="app-container">
+      <!-- Terminal Header / Command Bar -->
+      <header class="terminal-header">
+        <div class="brand-section">
+          <div class="brand-title">Fin<span class="amber">Trace</span></div>
+          <div class="brand-subtitle">LIVE NETWORK LATENCY GLOBE — FINANCIAL INFRASTRUCTURE</div>
         </div>
-        <h1 class="hero-title">Fin<span class="amber">Trace</span></h1>
-        <p class="hero-tagline" id="hero-tagline">
-          Visualizing network proximity to global financial infrastructure<span class="cursor"></span>
-        </p>
-        <div class="stats-bar">
-          <div class="stat-item">
-            <div class="stat-number">9</div>
-            <div class="stat-label">Endpoints Tracked</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">SSE</div>
-            <div class="stat-label">Live Hop Streaming</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">3</div>
-            <div class="stat-label">Compare Slots</div>
-          </div>
-        </div>
-      </div>
-    </header>
 
-    <main class="app-main">
-      <div class="container">
-        <section class="controls-bar" id="controls">
-          <div class="control-group" id="single-controls">
+        <div class="controls-section">
+          <!-- Single / Live Mode Controls -->
+          <div class="control-item" id="single-controls">
+            <span class="control-label">SELECT ENDPOINT</span>
             <select class="endpoint-select" id="endpoint-select"></select>
-            <span class="control-or">or</span>
+          </div>
+
+          <!-- Compare Mode Controls -->
+          <div class="control-item compare-controls" id="compare-controls" hidden>
+            <span class="control-label">COMPARE 3 TARGETS</span>
+            <div class="compare-slots" id="compare-slots"></div>
+          </div>
+
+          <!-- Mode Switcher -->
+          <div class="control-item">
+            <span class="control-label">MODE</span>
+            <div class="mode-pill-group">
+              <button class="mode-btn active" data-mode="single">Single</button>
+              <button class="mode-btn" data-mode="live">Live</button>
+              <button class="mode-btn" data-mode="compare">Compare</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-action-section">
+          <div class="live-status-badge" id="live-status-badge" hidden>
+            <span class="status-indicator live">
+              <span class="pulse-dot"></span>
+              <span id="live-status-text">LIVE</span>
+            </span>
+            <span class="status-timer" id="live-timer-countdown">Next update in 30s</span>
+          </div>
+
+          <button class="run-btn" id="run-btn">Run Trace →</button>
+          <button class="run-btn" id="compare-run-btn" hidden>Compare →</button>
+        </div>
+      </header>
+
+      <!-- Main 3-Column Terminal Workspace -->
+      <main class="terminal-main-grid">
+        <!-- Left: Endpoints Directory & Legend -->
+        <aside class="endpoints-directory-card">
+          <div class="directory-header">ENDPOINTS DIRECTORY</div>
+          <div class="endpoint-list" id="endpoint-list">
+            <!-- Populated dynamically with endpoints and live latency badges -->
+          </div>
+
+          <div class="custom-endpoint-box">
+            <span class="control-label">CUSTOM HOST / IP</span>
             <input
               class="host-input"
               id="host-input"
               type="text"
-              placeholder="custom hostname / IP"
+              placeholder="e.g. 1.1.1.1 or bseindia.com"
               spellcheck="false"
             />
-            <button class="run-btn" id="run-btn">Run Trace →</button>
           </div>
-          <div class="control-group compare-controls" id="compare-controls" hidden>
-            <div class="compare-slots" id="compare-slots"></div>
-            <button class="run-btn" id="compare-run-btn">Compare →</button>
-          </div>
-        </section>
 
-        <section class="globe-panel-layout">
-          <div class="globe-container" id="globe"></div>
-          <aside class="side-panel">
-            <div class="legend" id="legend">
-              <div class="legend-item">
-                <span class="legend-dot low"></span>
-                <span class="legend-label">&lt; 50 ms</span>
+          <div class="directory-legend">
+            <div class="legend-title">LATENCY LEGEND</div>
+            <div class="legend-items-list">
+              <div class="legend-row">
+                <span>&lt; 50 ms</span>
+                <span class="legend-bar low"></span>
+                <span>Low latency</span>
               </div>
-              <div class="legend-item">
-                <span class="legend-dot medium"></span>
-                <span class="legend-label">50–150 ms</span>
+              <div class="legend-row">
+                <span>50 – 150 ms</span>
+                <span class="legend-bar medium"></span>
+                <span>Medium latency</span>
               </div>
-              <div class="legend-item">
-                <span class="legend-dot high"></span>
-                <span class="legend-label">&gt; 150 ms</span>
+              <div class="legend-row">
+                <span>&gt; 150 ms</span>
+                <span class="legend-bar high"></span>
+                <span>High latency</span>
               </div>
             </div>
-            <div class="panel-header">
-              <span class="panel-title" id="panel-title">Awaiting trace…</span>
-            </div>
-            <div class="hop-table" id="hop-table"></div>
-          </aside>
-        </section>
-      </div>
-    </main>
+          </div>
+        </aside>
 
-    <footer class="site-footer">
-      <div class="container">
-        <span>FinTrace — built for the Fintech Club</span>
-      </div>
-    </footer>
+        <!-- Center: 3D Globe Viewport -->
+        <section class="globe-container" id="globe">
+          <!-- Canvas & Floating HUD controls initialized by GlobeView -->
+        </section>
+
+        <!-- Right: Hop Telemetry Panel -->
+        <aside class="side-panel">
+          <div class="panel-header">
+            <span class="panel-title" id="panel-title">Awaiting trace telemetry…</span>
+            <span class="panel-rtt-badge" id="panel-rtt-badge"></span>
+          </div>
+          <div class="hop-table" id="hop-table"></div>
+        </aside>
+      </main>
+
+      <!-- Bottom Analytics Section -->
+      <section class="analytics-section">
+        <!-- 4 Derived Metrics Cards -->
+        <div id="route-summary"></div>
+
+        <!-- Latency Tier Composition Bar -->
+        <div id="tier-dist-chart" class="tier-dist-card"></div>
+
+        <!-- Dual Chart Layout: Latency Over Time + Hop Latency Bars / Compare Cards -->
+        <div class="analytics-dual-grid">
+          <!-- Left: Latency Over Time (SVG Multi-series chart) -->
+          <div class="analytics-card" id="time-series-chart"></div>
+
+          <!-- Right: Hop Latency Profile (Bars) or Compare Cards -->
+          <div class="analytics-card" id="hop-rtt-chart"></div>
+          <div class="analytics-card" id="compare-cards-container" hidden></div>
+        </div>
+      </section>
+
+      <!-- Footer Status Bar -->
+      <footer class="terminal-footer-bar">
+        <div class="footer-left">
+          <span class="footer-version">FinTrace v1.0.0</span>
+          <span class="footer-status-pill">
+            <span class="status-dot"></span>
+            <span>Backend: :3001</span>
+          </span>
+          <span class="footer-status-pill">
+            <span class="status-dot"></span>
+            <span>Frontend: :5173</span>
+          </span>
+        </div>
+        <div class="footer-right" id="footer-source-ip">
+          <span>Source: Local Client (127.0.0.1)</span>
+        </div>
+      </footer>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>
