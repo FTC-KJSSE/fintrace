@@ -75,7 +75,7 @@ async function createWindow() {
   try {
     // 1. Start Express backend on a dynamic free local port (port: 0)
     console.log("[FinTrace Desktop] Starting local Express backend on dynamic port...");
-    serverInstance = await startServer({ port: 0, host: "127.0.0.1" });
+    serverInstance = await startServer({ port: 0, host: "127.0.0.1", userDataDir: app.getPath("userData") });
     console.log(`[FinTrace Desktop] Backend listening on ${serverInstance.url}`);
 
     // 2. Await health check confirmation

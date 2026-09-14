@@ -2,11 +2,20 @@ import express from "express";
 import cors from "cors";
 import path from "node:path";
 import fs from "node:fs";
+import dns from "node:dns";
 import { fileURLToPath } from "node:url";
 import { ENDPOINTS, findEndpoint } from "./src/endpoints.js";
 import { runTraceroute, killChildProcess, terminateAllTraces } from "./src/traceRunner.js";
 import { geolocate } from "./src/geolocate.js";
 import { initSse, sendSse, startHeartbeat } from "./src/sse.js";
+import {
+  getAuthStatus,
+  setupPassword,
+  verifyPassword,
+  lockSession,
+  resetAuth,
+  getDefaultAuthFilePath,
+} from "./src/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,18 +32,50 @@ const DEFAULT_STATIC_DIR = getStaticDir();
 
 const DEFAULT_PORT = 3001;
 const DEFAULT_HOST = "127.0.0.1";
-const MAX_CONCURRENT_TRACES = 6;
+export const MAX_CONCURRENT_TRACES = 6;
+export const MAX_HOST_LENGTH = 253;
 
 const HOST_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9.-]{0,252})[a-zA-Z0-9]$|^[a-zA-Z0-9]$/;
 const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 const RESERVED_DOMAIN_SUFFIXES = [".local", ".internal", ".localhost", ".onion", ".lan", ".test", ".example", ".invalid", ".home", ".corp"];
 
+/**
+ * Checks if an IPv4 string falls within private, loopback, link-local, or reserved ranges.
+ */
+export function isRestrictedIp(ip) {
+  if (!ip || typeof ip !== "string") return true;
+  const match = ip.match(IPV4_RE);
+  if (!match) return true;
+  const octets = [match[1], match[2], match[3], match[4]].map(Number);
+  if (octets.some((o) => o < 0 || o > 255)) return true;
+
+  const [o1, o2] = octets;
+  // Loopback (127.0.0.0/8) & Current network (0.0.0.0/8)
+  if (o1 === 127 || o1 === 0) return true;
+  // RFC-1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+  if (o1 === 10 || (o1 === 172 && o2 >= 16 && o2 <= 31) || (o1 === 192 && o2 === 168)) return true;
+  // Carrier-Grade NAT (100.64.0.0/10)
+  if (o1 === 100 && o2 >= 64 && o2 <= 127) return true;
+  // Link-Local (169.254.0.0/16)
+  if (o1 === 169 && o2 === 254) return true;
+  // Multicast / Reserved / Broadcast (224.0.0.0/4 and above)
+  if (o1 >= 224) return true;
+
+  return false;
+}
+
+/**
+ * Synchronous syntax & format validation for host/IP targets.
+ */
 export function validateTarget(host) {
   if (!host || typeof host !== "string") {
     return { valid: false, error: "Missing or invalid host parameter" };
   }
 
   const trimmed = host.trim();
+  if (trimmed.length > MAX_HOST_LENGTH) {
+    return { valid: false, error: `Host exceeds maximum allowable length (${MAX_HOST_LENGTH} characters)` };
+  }
 
   // Disallow IPv6 if attempted (unsupported by trace parser)
   if (trimmed.includes(":")) {
@@ -45,41 +86,11 @@ export function validateTarget(host) {
     return { valid: false, error: "Invalid hostname or IP syntax" };
   }
 
-  // Check if it's an IPv4 address
-  const ipMatch = trimmed.match(IPV4_RE);
-  if (ipMatch) {
-    const octets = [ipMatch[1], ipMatch[2], ipMatch[3], ipMatch[4]].map(Number);
-    if (octets.some((o) => o < 0 || o > 255)) {
-      return { valid: false, error: "IPv4 octets must be between 0 and 255" };
+  // Check if it's an IPv4 address literal
+  if (IPV4_RE.test(trimmed)) {
+    if (isRestrictedIp(trimmed)) {
+      return { valid: false, error: "Private, loopback, link-local, and reserved IP addresses are not allowed" };
     }
-
-    const [o1, o2] = octets;
-
-    // Reject loopback (127.0.0.0/8) & current network (0.0.0.0/8)
-    if (o1 === 127 || o1 === 0) {
-      return { valid: false, error: "Loopback and broadcast addresses are not allowed" };
-    }
-
-    // Reject RFC 1918 Private ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
-    if (o1 === 10 || (o1 === 172 && o2 >= 16 && o2 <= 31) || (o1 === 192 && o2 === 168)) {
-      return { valid: false, error: "Private/internal RFC-1918 IP ranges are not allowed" };
-    }
-
-    // Reject Carrier-Grade NAT (100.64.0.0/10)
-    if (o1 === 100 && o2 >= 64 && o2 <= 127) {
-      return { valid: false, error: "Carrier-Grade NAT IP addresses are not allowed" };
-    }
-
-    // Reject Link-Local (169.254.0.0/16)
-    if (o1 === 169 && o2 === 254) {
-      return { valid: false, error: "Link-local IP addresses are not allowed" };
-    }
-
-    // Reject Multicast / Reserved (224.0.0.0/4 and above)
-    if (o1 >= 224) {
-      return { valid: false, error: "Multicast or reserved IP addresses are not allowed" };
-    }
-
     return { valid: true, host: trimmed };
   }
 
@@ -101,11 +112,54 @@ export function validateTarget(host) {
 }
 
 /**
+ * Asynchronous validation that resolves FQDNs to ensure they do not resolve to private/loopback IPs.
+ */
+export async function validateTargetAsync(host, options = {}) {
+  const syncValidation = validateTarget(host);
+  if (!syncValidation.valid) {
+    return syncValidation;
+  }
+
+  const trimmed = syncValidation.host;
+  // If host is already an IPv4 literal, syntax check already verified it is public
+  if (IPV4_RE.test(trimmed)) {
+    return syncValidation;
+  }
+
+  // For domain names, resolve IPv4 address via DNS lookup
+  const lookupFn = options.dnsLookupFn || dns.promises.lookup;
+  try {
+    const result = await lookupFn(trimmed, { family: 4 });
+    const resolvedIp = typeof result === "string" ? result : result?.address;
+    if (!resolvedIp) {
+      return { valid: false, error: `Could not resolve IPv4 address for host: ${trimmed}` };
+    }
+
+    if (isRestrictedIp(resolvedIp)) {
+      return {
+        valid: false,
+        error: `Target host '${trimmed}' resolves to a restricted private or loopback IP address (${resolvedIp})`,
+      };
+    }
+
+    return { valid: true, host: trimmed, resolvedIp };
+  } catch (err) {
+    return {
+      valid: false,
+      error: `DNS resolution failed for '${trimmed}': ${err.code === "ENOTFOUND" ? "Host not found" : err.message || err}`,
+    };
+  }
+}
+
+/**
  * Creates and configures the Express application instance.
  */
 export function createApp(options = {}) {
   const app = express();
   app.use(cors());
+  app.use(express.json());
+
+  const authFilePath = options.authFilePath || getDefaultAuthFilePath(options.userDataDir);
 
   let activeTraceCount = 0;
 
@@ -114,18 +168,54 @@ export function createApp(options = {}) {
     res.json({ status: "ok" });
   });
 
+  // Authentication endpoints
+  app.get("/api/auth/status", (_req, res) => {
+    res.json(getAuthStatus(authFilePath));
+  });
+
+  app.post("/api/auth/setup", (req, res) => {
+    const { password } = req.body || {};
+    const result = setupPassword(password, { filePath: authFilePath });
+    if (!result.success) return res.status(400).json(result);
+    res.json(result);
+  });
+
+  app.post("/api/auth/unlock", (req, res) => {
+    const { password } = req.body || {};
+    const result = verifyPassword(password, { filePath: authFilePath });
+    if (!result.success) return res.status(401).json(result);
+    res.json(result);
+  });
+
+  app.post("/api/auth/lock", (_req, res) => {
+    const result = lockSession();
+    res.json(result);
+  });
+
+  app.post("/api/auth/reset", (_req, res) => {
+    const result = resetAuth({ filePath: authFilePath });
+    res.json(result);
+  });
+
   // Endpoints list
   app.get("/api/endpoints", (_req, res) => {
     res.json(ENDPOINTS);
   });
 
   // SSE Trace endpoint
-  app.get("/api/trace/:target", (req, res) => {
+  app.get("/api/trace/:target", async (req, res) => {
     const { target } = req.params;
     const endpoint = findEndpoint(target);
     const rawHost = endpoint ? endpoint.host : req.query.host || target;
 
-    const validation = validateTarget(rawHost);
+    // Enforce authentication if setup
+    const authStatus = getAuthStatus(authFilePath);
+    if (authStatus.isSetup && !authStatus.isUnlocked) {
+      res.status(401).json({ error: "FinTrace is locked. Please unlock the application to initiate traces." });
+      return;
+    }
+
+    const validation = await validateTargetAsync(rawHost);
     if (!validation.valid) {
       res.status(400).json({ error: validation.error });
       return;
@@ -156,24 +246,35 @@ export function createApp(options = {}) {
     }
 
     function maybeFinish() {
-      if (pendingLookups > 0 || !traceResult) return;
-      if (traceResult.type === "error") {
-        sendSse(res, "error", { message: traceResult.message });
-      } else {
-        sendSse(res, "done", {});
+      if (pendingLookups > 0 || !traceResult || cleanedUp) return;
+      if (!res.writableEnded) {
+        if (traceResult.type === "error") {
+          sendSse(res, "error", { message: traceResult.message });
+        } else {
+          sendSse(res, "done", {});
+        }
+        res.end();
       }
       cleanup();
-      res.end();
     }
 
     const child = runTraceroute(host, {
       onHop: (hop) => {
         pendingLookups++;
         geolocate(hop.ip)
-          .then((geo) => sendSse(res, "hop", { ...hop, geo }))
-          .catch(() => sendSse(res, "hop", { ...hop, geo: null }))
+          .then((geo) => {
+            if (!cleanedUp && !res.writableEnded) {
+              sendSse(res, "hop", { ...hop, geo });
+            }
+          })
+          .catch((err) => {
+            console.warn(`[FinTrace] Geolocation lookup error for ${hop.ip}:`, err?.message || err);
+            if (!cleanedUp && !res.writableEnded) {
+              sendSse(res, "hop", { ...hop, geo: null });
+            }
+          })
           .finally(() => {
-            pendingLookups--;
+            pendingLookups = Math.max(0, pendingLookups - 1);
             maybeFinish();
           });
       },

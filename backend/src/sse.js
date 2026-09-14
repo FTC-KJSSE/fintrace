@@ -9,8 +9,13 @@ export function initSse(res) {
 }
 
 export function sendSse(res, event, data) {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${JSON.stringify(data)}\n\n`);
+  if (!res || res.writableEnded || res.destroyed) return;
+  try {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  } catch {
+    // Suppress write errors on abruptly closed sockets
+  }
 }
 
 /**

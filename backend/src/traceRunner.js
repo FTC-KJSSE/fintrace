@@ -28,34 +28,56 @@ export function parseHopLine(line) {
   return { hopIndex, ip, rttMs, timedOut };
 }
 
-const MAX_HOPS = 20;
-const TIMEOUT_MS_WIN = 1000;
-const TIMEOUT_S_UNIX = 1;
+export const MAX_HOPS = 20;
+export const TIMEOUT_MS_WIN = 1000;
+export const TIMEOUT_S_UNIX = 1;
+export const MAX_TRACE_TIMEOUT_MS = 60000; // 60s hard ceiling for traceroute process
 
 const activeProcesses = new Set();
 
 export function killChildProcess(child) {
-  if (!child || child.killed || child.exitCode !== null) return;
+  if (!child) return;
   activeProcesses.delete(child);
+
+  if (child._watchdogTimer) {
+    clearTimeout(child._watchdogTimer);
+    child._watchdogTimer = null;
+  }
+
+  if (child.killed || child.exitCode !== null) return;
+
   if (process.platform === "win32") {
     try {
-      spawn("taskkill", ["/F", "/T", "/PID", String(child.pid)], { stdio: "ignore" }).on("error", () => {
-        child.kill();
-      });
+      if (typeof child.pid === "number") {
+        spawn("taskkill", ["/F", "/T", "/PID", String(child.pid)], { stdio: "ignore" }).on("error", () => {
+          try {
+            child.kill();
+          } catch {}
+        });
+      }
       child.kill();
     } catch {
-      child.kill();
+      try {
+        child.kill();
+      } catch {}
     }
   } else {
-    child.kill("SIGTERM");
+    try {
+      child.kill("SIGTERM");
+    } catch {}
   }
 }
 
 export function terminateAllTraces() {
-  for (const child of activeProcesses) {
+  const procs = [...activeProcesses];
+  activeProcesses.clear();
+  for (const child of procs) {
     killChildProcess(child);
   }
-  activeProcesses.clear();
+}
+
+export function _getActiveProcessesCount() {
+  return activeProcesses.size;
 }
 
 // Ensure all spawned trace processes terminate on backend shutdown
@@ -74,7 +96,7 @@ function commandFor(host) {
  * Spawns the OS traceroute command and streams parsed hops as they arrive.
  * Returns the child process so the caller can kill it on client disconnect.
  */
-export function runTraceroute(host, { onHop, onError, onDone }) {
+export function runTraceroute(host, { onHop, onError, onDone, timeoutMs = MAX_TRACE_TIMEOUT_MS }) {
   const { cmd, args } = commandFor(host);
   const child = spawn(cmd, args);
   activeProcesses.add(child);
@@ -82,22 +104,14 @@ export function runTraceroute(host, { onHop, onError, onDone }) {
   const rl = readline.createInterface({ input: child.stdout });
   rl.on("line", (line) => {
     const hop = parseHopLine(line);
-    if (hop) onHop(hop);
+    if (hop && onHop) onHop(hop);
   });
 
   let stderrBuf = "";
-  child.stderr.on("data", (chunk) => {
+  child.stderr?.on("data", (chunk) => {
     stderrBuf += chunk.toString();
   });
 
-  child.on("error", (err) => {
-    activeProcesses.delete(child);
-    onError(err.code === "ENOENT" ? new Error(`${cmd} not found on this system`) : err);
-  });
-
-  // `child`'s own close/exit can fire before `readline` has emitted the last
-  // buffered line from stdout — wait for both signals so no trailing hop is
-  // dropped.
   let rlClosed = false;
   let exitCode = null;
   let settled = false;
@@ -105,13 +119,48 @@ export function runTraceroute(host, { onHop, onError, onDone }) {
   function finish() {
     if (settled || !rlClosed || exitCode === null) return;
     settled = true;
+    if (child._watchdogTimer) {
+      clearTimeout(child._watchdogTimer);
+      child._watchdogTimer = null;
+    }
     activeProcesses.delete(child);
+    try {
+      rl.close();
+    } catch {}
+
     if (exitCode !== 0 && stderrBuf.trim()) {
-      onError(new Error(stderrBuf.trim()));
+      onError?.(new Error(stderrBuf.trim()));
     } else {
-      onDone();
+      onDone?.();
     }
   }
+
+  // Hard execution timeout guard to prevent indefinitely hanging tracert processes
+  child._watchdogTimer = setTimeout(() => {
+    if (!settled) {
+      settled = true;
+      activeProcesses.delete(child);
+      killChildProcess(child);
+      try {
+        rl.close();
+      } catch {}
+      onError?.(new Error(`Traceroute execution timed out after ${timeoutMs / 1000}s`));
+    }
+  }, timeoutMs);
+
+  child.on("error", (err) => {
+    if (settled) return;
+    settled = true;
+    if (child._watchdogTimer) {
+      clearTimeout(child._watchdogTimer);
+      child._watchdogTimer = null;
+    }
+    activeProcesses.delete(child);
+    try {
+      rl.close();
+    } catch {}
+    onError?.(err.code === "ENOENT" ? new Error(`${cmd} not found on this system`) : err);
+  });
 
   rl.on("close", () => {
     rlClosed = true;
@@ -119,7 +168,7 @@ export function runTraceroute(host, { onHop, onError, onDone }) {
   });
 
   child.on("close", (code) => {
-    exitCode = code;
+    exitCode = code ?? 0;
     finish();
   });
 

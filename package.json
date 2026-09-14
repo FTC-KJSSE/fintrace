@@ -19,11 +19,13 @@
     "start": "electron .",
     "package": "npm run build && electron-builder --win",
     "package:dir": "npm run build && electron-builder --win --dir",
-    "dist": "npm run build && electron-builder --win"
+    "dist": "npm run build && electron-builder --win",
+    "test": "node --test"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "mmdb-lib": "^3.0.3"
   },
   "devDependencies": {
     "electron": "^44.3.0",
@@ -44,7 +46,8 @@
     ],
     "asar": true,
     "asarUnpack": [
-      "frontend/dist/**/*"
+      "frontend/dist/**/*",
+      "backend/data/**/*"
     ],
     "win": {
       "target": [
