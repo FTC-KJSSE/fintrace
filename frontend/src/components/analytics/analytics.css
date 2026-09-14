@@ -1,0 +1,380 @@
+/* ---------- FinTrace Analytics Suite Styling ---------- */
+
+.analytics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 24px;
+}
+
+/* --- Metrics Grid --- */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.metric-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.metric-card:hover {
+  border-color: rgba(240, 168, 48, 0.3);
+  transform: translateY(-1px);
+}
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.metric-value.low {
+  color: var(--latency-low);
+  text-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
+}
+
+.metric-value.medium {
+  color: var(--latency-medium);
+  text-shadow: 0 0 12px rgba(240, 168, 48, 0.25);
+}
+
+.metric-value.high {
+  color: var(--latency-high);
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+}
+
+.metric-value.amber {
+  color: var(--accent-amber);
+}
+
+.metric-sub-num {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.metric-sub {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+/* --- Tier Distribution Bar --- */
+.tier-dist-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.tier-dist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.dist-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.dist-total {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.tier-bar-track {
+  height: 8px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.tier-bar-seg {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.tier-bar-seg.low {
+  background: var(--latency-low);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.tier-bar-seg.medium {
+  background: var(--latency-medium);
+  box-shadow: 0 0 8px rgba(240, 168, 48, 0.4);
+}
+
+.tier-bar-seg.high {
+  background: var(--latency-high);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.tier-bar-seg.timeout {
+  background: #64748b;
+}
+
+.tier-dist-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.dist-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.dist-tag .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dist-tag.low .dot { background: var(--latency-low); }
+.dist-tag.medium .dot { background: var(--latency-medium); }
+.dist-tag.high .dot { background: var(--latency-high); }
+.dist-tag.timeout .dot { background: #64748b; }
+
+/* --- Analytics Dual-Column Layout (Hop Profile + Latency Over Time) --- */
+.analytics-dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .analytics-dual-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.analytics-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Hop Bars Component --- */
+.hop-bars-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.hop-bars-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.scale-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.hop-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hop-bar-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 120px;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.hop-bar-num {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.hop-bar-track-wrap {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  overflow: hidden;
+}
+
+.hop-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  border-radius: 4px;
+  opacity: 0.4;
+  transition: width 0.3s ease;
+}
+
+.hop-bar-fill.low { background: var(--latency-low); }
+.hop-bar-fill.medium { background: var(--latency-medium); }
+.hop-bar-fill.high { background: var(--latency-high); }
+.hop-bar-fill.timeout { background: #475569; }
+
+.hop-bar-val {
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+  font-size: 0.74rem;
+}
+
+.hop-bar-val.low { color: var(--latency-low); }
+.hop-bar-val.medium { color: var(--latency-medium); }
+.hop-bar-val.high { color: var(--latency-high); }
+.hop-bar-val.timeout { color: var(--text-muted); }
+
+.hop-delta {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  font-size: 0.68rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.hop-delta.jump {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.hop-delta.drop {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.hop-bar-loc {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+/* --- Latency Over Time Time Series Component --- */
+.time-series-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.time-series-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.time-series-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.time-legend-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+}
+
+.legend-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+
+.legend-name {
+  color: var(--text-secondary);
+}
+
+.legend-val {
+  font-weight: 600;
+}
+
+.time-series-svg-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+}
+
+.time-series-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart-empty {
+  margin: auto;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 30px 10px;
+}

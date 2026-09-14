@@ -20,24 +20,101 @@
   border-color: var(--accent-amber);
 }
 
-.compare-legend {
+.compare-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.compare-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 14px;
   display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compare-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.compare-card-label {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.card-rank-tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.card-rank-tag.rank-1 {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.card-rank-tag.rank-2 {
+  color: #f0a830;
+  background: rgba(240, 168, 48, 0.15);
+  border: 1px solid rgba(240, 168, 48, 0.4);
+}
+
+.card-rank-tag.rank-3 {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.card-rank-tag.pending {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.compare-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.compare-card-rtt {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.compare-card-rtt.low { color: var(--latency-low); }
+.compare-card-rtt.medium { color: var(--latency-medium); }
+.compare-card-rtt.high { color: var(--latency-high); }
+.compare-card-rtt.timeout { color: var(--text-muted); }
+
+.compare-card-host {
   font-family: var(--font-mono);
   font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
-.compare-legend-item {
+.compare-card-spark-wrap {
+  height: 28px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: var(--text-secondary);
 }
 
-.compare-swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
+.compare-card-footer {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 6px;
 }

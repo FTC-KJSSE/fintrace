@@ -1,18 +1,22 @@
-import { latencyTier } from "../../lib/latency.js";
+import { latencyTier, TIER_COLOR } from "../../lib/latency.js";
 import { renderSparkline } from "../../lib/sparkline.js";
-import { TIER_COLOR } from "../../lib/latency.js";
+import { haversineDistanceKm } from "../../lib/geoMath.js";
 
 export class HopPanel {
-  constructor(tableEl, titleEl) {
+  constructor(tableEl, titleEl, subtitleEl = null) {
     this.tableEl = tableEl;
     this.titleEl = titleEl;
-    this.rows = new Map(); // hopIndex -> { el, history }
+    this.subtitleEl = subtitleEl;
+    this.rows = new Map(); // hopIndex -> { el, history, hopData }
+    this.lastGeoHop = null;
   }
 
-  reset(title) {
+  reset(title, subtitle = "") {
     this.tableEl.innerHTML = "";
     this.rows.clear();
-    this.titleEl.textContent = title;
+    this.lastGeoHop = null;
+    if (this.titleEl) this.titleEl.textContent = title;
+    if (this.subtitleEl) this.subtitleEl.textContent = subtitle;
   }
 
   upsertHop(hop) {
@@ -25,42 +29,82 @@ export class HopPanel {
       el.dataset.hopIndex = String(hop.hopIndex);
       el.innerHTML = `
         <span class="hop-index">${hop.hopIndex}</span>
-        <span class="hop-meta">
-          <span class="hop-ip">${hop.ip ?? "* * *"}</span>
+        <div class="hop-meta">
+          <div class="hop-ip-line">
+            <span class="hop-ip">${hop.ip ?? "* * *"}</span>
+            <span class="hop-dist"></span>
+          </div>
           <span class="hop-location"></span>
-        </span>
-        <span class="hop-rtt-wrap">
+        </div>
+        <div class="hop-rtt-wrap">
           <span class="hop-rtt"></span>
-        </span>
+        </div>
       `;
 
-      // Hop rows can arrive out of order — each server-side geolocation
-      // lookup resolves independently (cached IPs are instant, fresh ones
-      // wait in a throttled queue) — so insert by hop index rather than
-      // arrival order.
+      // Insert by hop index order
       const nextSibling = [...this.tableEl.children].find(
         (child) => Number(child.dataset.hopIndex) > hop.hopIndex
       );
       this.tableEl.insertBefore(el, nextSibling ?? null);
 
       requestAnimationFrame(() => el.classList.add("visible"));
-      entry = { el, history: [] };
+      entry = { el, history: [], hopData: hop };
       this.rows.set(hop.hopIndex, entry);
     }
 
+    entry.hopData = hop;
     const { el, history } = entry;
+    const ipEl = el.querySelector(".hop-ip");
+    const distEl = el.querySelector(".hop-dist");
     const locationEl = el.querySelector(".hop-location");
     const rttEl = el.querySelector(".hop-rtt");
     const rttWrap = el.querySelector(".hop-rtt-wrap");
 
-    el.querySelector(".hop-ip").textContent = hop.ip ?? "* * *";
-    locationEl.textContent = hop.geo ? `${hop.geo.city ?? "—"} · ${hop.geo.isp ?? ""}` : hop.timedOut ? "no response" : "—";
+    ipEl.textContent = hop.ip ?? "* * *";
+    
+    // Check geographic distance from previous geolocated hop
+    if (hop.geo && hop.geo.lat != null && hop.geo.lon != null) {
+      let prevGeo = null;
+      for (let i = hop.hopIndex - 1; i >= 1; i--) {
+        const prev = this.rows.get(i);
+        if (prev?.hopData?.geo?.lat != null) {
+          prevGeo = prev.hopData.geo;
+          break;
+        }
+      }
+      if (prevGeo) {
+        const distKm = Math.round(haversineDistanceKm(prevGeo.lat, prevGeo.lon, hop.geo.lat, hop.geo.lon));
+        distEl.textContent = `~${distKm.toLocaleString()} km`;
+        distEl.title = `Approx. great-circle distance from Hop #${prevGeo.hopIndex ?? "prev"}`;
+      } else {
+        distEl.textContent = "";
+      }
+      locationEl.textContent = `${hop.geo.city || "—"}${hop.geo.country ? `, ${hop.geo.country}` : ""} · ${hop.geo.isp || ""}`;
+    } else {
+      distEl.textContent = "";
+      locationEl.textContent = hop.timedOut ? "no response" : "—";
+    }
 
-    rttEl.textContent = hop.rttMs != null ? `${hop.rttMs} ms` : "timeout";
+    // RTT delta calculation with previous hop
+    let deltaBadge = "";
+    if (hop.hopIndex > 1 && hop.rttMs != null) {
+      const prev = this.rows.get(hop.hopIndex - 1);
+      if (prev?.hopData?.rttMs != null) {
+        const delta = Math.round((hop.rttMs - prev.hopData.rttMs) * 10) / 10;
+        if (delta > 10) {
+          deltaBadge = ` <span class="hop-rtt-jump" title="RTT increase from previous hop">+${delta}ms</span>`;
+        }
+      }
+    }
+
+    rttEl.innerHTML = hop.rttMs != null ? `${hop.rttMs} ms${deltaBadge}` : "timeout";
     rttEl.className = `hop-rtt ${tier === "timeout" ? "timeout" : tier}`;
 
     if (hop.rttMs != null) {
       history.push(hop.rttMs);
+      if (history.length > 20) {
+        history.shift();
+      }
       const oldSpark = rttWrap.querySelector(".hop-sparkline");
       if (oldSpark) oldSpark.remove();
       if (history.length > 1) {
@@ -70,19 +114,43 @@ export class HopPanel {
   }
 
   showCompareSummary(entries) {
+    // Sort completed entries to determine 1st, 2nd, 3rd ranking
+    const sorted = [...entries].sort((a, b) => {
+      if (a.rttMs == null) return 1;
+      if (b.rttMs == null) return -1;
+      return a.rttMs - b.rttMs;
+    });
+
+    const rankMap = new Map();
+    let currentRank = 1;
+    sorted.forEach((e, idx) => {
+      if (e.rttMs != null) {
+        if (idx > 0 && sorted[idx - 1].rttMs === e.rttMs) {
+          rankMap.set(e.id, rankMap.get(sorted[idx - 1].id));
+        } else {
+          rankMap.set(e.id, `${currentRank}`);
+          currentRank++;
+        }
+      }
+    });
+
     this.tableEl.innerHTML = entries
       .map((entry) => {
+        const rank = rankMap.get(entry.id);
+        const rankBadge = rank ? `<span class="compare-rank-badge rank-${rank}">#${rank}</span>` : "";
         const rttLabel = entry.rttMs != null ? `${entry.rttMs} ms` : entry.status ?? "…";
+        const tier = entry.rttMs != null ? latencyTier(entry.rttMs) : "timeout";
+
         return `
-          <div class="hop-row reveal visible">
-            <span class="hop-index"></span>
-            <span class="hop-meta">
+          <div class="hop-row compare-row reveal visible">
+            <span class="hop-index">${rankBadge}</span>
+            <div class="hop-meta">
               <span class="hop-ip" style="color:${entry.color}">${entry.label}</span>
               <span class="hop-location">${entry.host}</span>
-            </span>
-            <span class="hop-rtt-wrap">
-              <span class="hop-rtt" style="color:${entry.color}">${rttLabel}</span>
-            </span>
+            </div>
+            <div class="hop-rtt-wrap">
+              <span class="hop-rtt ${tier}" style="color:${entry.color}">${rttLabel}</span>
+            </div>
           </div>
         `;
       })

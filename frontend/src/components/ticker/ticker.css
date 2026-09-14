@@ -6,8 +6,9 @@
   padding: 8px 0;
   position: relative;
   z-index: 2;
-  margin-top: 58px;
+  margin-top: 0;
 }
+
 
 .ticker-track {
   display: flex;
