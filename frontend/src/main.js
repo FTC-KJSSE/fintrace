@@ -4,7 +4,7 @@ import { latencyTier, TIER_COLOR } from "./lib/latency.js";
 import { GlobeView } from "./components/globe/globe.js";
 import { HopPanel } from "./components/panel/panel.js";
 import { TickerBar } from "./components/ticker/ticker.js";
-import { buildCompareSlots, renderCompareCards, COMPARE_COLORS } from "./components/compare/compare.js";
+import { buildCompareSlots, renderCompareCards, validateCompareTargets, COMPARE_COLORS } from "./components/compare/compare.js";
 import { deriveRouteMetrics } from "./lib/geoMath.js";
 import { AnalyticsSuite } from "./components/analytics/analytics.js";
 import { AuthModal } from "./components/auth/auth.js";
@@ -375,20 +375,27 @@ function runSingleTrace(target, { keepPanelHistory = false } = {}) {
 }
 
 function runCompareTrace(targetIds) {
+  const validation = validateCompareTargets(targetIds);
+  if (!validation.valid) {
+    els.panelTitle.textContent = validation.error;
+    return;
+  }
+
+  const validTargets = validation.targets;
   closeActiveSources();
   stopLive();
   globe.reset();
   routeTracker.reset();
 
-  const selectedEndpoints = targetIds.map((id) => endpointById(id));
+  const selectedEndpoints = validTargets.map((id) => endpointById(id));
   globe.frameCompareView(selectedEndpoints);
 
-  els.panelTitle.textContent = "COMPARING 3 ENDPOINTS…";
+  els.panelTitle.textContent = `COMPARING ${validTargets.length} ENDPOINTS…`;
   if (els.panelRttBadge) els.panelRttBadge.textContent = "…";
 
-  const entries = targetIds.map((id, i) => {
+  const entries = validTargets.map((id, i) => {
     const endpoint = endpointById(id);
-    const color = COMPARE_COLORS[i];
+    const color = COMPARE_COLORS[i] || "#8e959d";
     routeTracker.initRoute(id, endpoint, color, i);
     return {
       id,
@@ -405,7 +412,7 @@ function runCompareTrace(targetIds) {
   panel.showCompareSummary(entries);
   renderCompareCards(els.compareCardsContainer, entries);
 
-  targetIds.forEach((id, i) => {
+  validTargets.forEach((id, i) => {
     const source = openTrace(id, {
       onHop: (hop) => {
         entries[i].hopCount++;
@@ -530,7 +537,9 @@ els.runBtn.addEventListener("click", () => {
 });
 
 els.compareRunBtn.addEventListener("click", () => {
-  const ids = [...els.compareSlots.querySelectorAll(".compare-slot")].map((s) => s.value);
+  const ids = typeof els.compareSlots.getSelectedIds === "function"
+    ? els.compareSlots.getSelectedIds()
+    : [...els.compareSlots.querySelectorAll(".compare-slot")].map((s) => s.value);
   runCompareTrace(ids);
 });
 
