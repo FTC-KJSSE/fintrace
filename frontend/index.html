@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="/src/components/legend/legend.css" />
     <link rel="stylesheet" href="/src/components/compare/compare.css" />
     <link rel="stylesheet" href="/src/components/analytics/analytics.css" />
+    <link rel="stylesheet" href="/src/components/auth/auth.css" />
   </head>
   <body>
     <!-- Top Telemetry Ticker Tape -->
@@ -71,6 +72,7 @@
 
           <button class="run-btn" id="run-btn">Run Trace →</button>
           <button class="run-btn" id="compare-run-btn" hidden>Compare →</button>
+          <button class="lock-btn" id="lock-btn" title="Lock FinTrace" aria-label="Lock Session">🔒 Lock</button>
         </div>
       </header>
 
@@ -168,6 +170,9 @@
         </div>
       </footer>
     </div>
+
+    <!-- Local Authentication Overlay -->
+    <div id="auth-modal-overlay" class="auth-modal-overlay" hidden></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

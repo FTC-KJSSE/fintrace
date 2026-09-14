@@ -7,6 +7,7 @@ import { TickerBar } from "./components/ticker/ticker.js";
 import { buildCompareSlots, renderCompareCards, COMPARE_COLORS } from "./components/compare/compare.js";
 import { deriveRouteMetrics } from "./lib/geoMath.js";
 import { AnalyticsSuite } from "./components/analytics/analytics.js";
+import { AuthModal } from "./components/auth/auth.js";
 
 const LIVE_INTERVAL_MS = 30_000;
 
@@ -34,6 +35,8 @@ const els = {
   hopRttChart: document.getElementById("hop-rtt-chart"),
   compareCardsContainer: document.getElementById("compare-cards-container"),
   footerSourceIp: document.getElementById("footer-source-ip"),
+  lockBtn: document.getElementById("lock-btn"),
+  authModalOverlay: document.getElementById("auth-modal-overlay"),
 };
 
 let endpoints = [];
@@ -612,3 +615,14 @@ fetchEndpoints()
     console.error("Failed to load endpoints:", err);
     els.panelTitle.textContent = "Could not reach FinTrace backend on :3001";
   });
+
+const authModal = new AuthModal(els.authModalOverlay);
+
+els.lockBtn?.addEventListener("click", () => {
+  stopLive();
+  closeActiveSources();
+  authModal.lock();
+});
+
+// Check local authentication state on startup
+authModal.checkAndPrompt();
