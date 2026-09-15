@@ -7,6 +7,8 @@ import {
   validateCompareTargets,
   calculateCompareRanks,
   formatRankLabel,
+  calculateCompareProgress,
+  formatCompareStatus,
 } from "../frontend/src/components/compare/compare.js";
 import { MAX_CONCURRENT_TRACES } from "../backend/server.js";
 
@@ -127,6 +129,93 @@ describe("Compare Mode Expansion (2–6 Endpoints)", () => {
       assert.ok(altitudes[i] > altitudes[i - 1], `Altitude for slot ${i} must be higher than slot ${i - 1}`);
       assert.equal(Math.round((altitudes[i] - altitudes[i - 1]) * 1000) / 1000, 0.025);
     }
+  });
+
+  test("formatCompareStatus normalizes status strings accurately", () => {
+    assert.equal(formatCompareStatus(null), "WAITING");
+    assert.equal(formatCompareStatus(""), "WAITING");
+    assert.equal(formatCompareStatus("waiting"), "WAITING");
+    assert.equal(formatCompareStatus("idle"), "WAITING");
+    assert.equal(formatCompareStatus("tracing"), "TRACING");
+    assert.equal(formatCompareStatus("tracing…"), "TRACING");
+    assert.equal(formatCompareStatus("done"), "COMPLETE");
+    assert.equal(formatCompareStatus("complete"), "COMPLETE");
+    assert.equal(formatCompareStatus("timeout"), "TIMEOUT");
+    assert.equal(formatCompareStatus("timed out"), "TIMEOUT");
+    assert.equal(formatCompareStatus("error: ECONNREFUSED"), "FAILED");
+    assert.equal(formatCompareStatus("trace failed"), "FAILED");
+  });
+
+  test("calculateCompareProgress derives aggregate progress metrics for 2 to 6 routes", () => {
+    // 2 routes - all waiting
+    const p2Waiting = calculateCompareProgress([
+      { id: "e1", status: "waiting" },
+      { id: "e2", status: "waiting" },
+    ]);
+    assert.equal(p2Waiting.total, 2);
+    assert.equal(p2Waiting.completed, 0);
+    assert.equal(p2Waiting.waiting, 2);
+    assert.equal(p2Waiting.isFinished, false);
+    assert.equal(p2Waiting.summaryText, "COMPARE — 0/2 ROUTES COMPLETE");
+    assert.equal(p2Waiting.progressBadge, "0/2");
+
+    // 3 routes - 1 complete, 1 tracing, 1 waiting
+    const p3InProgress = calculateCompareProgress([
+      { id: "e1", status: "done" },
+      { id: "e2", status: "tracing" },
+      { id: "e3", status: "waiting" },
+    ]);
+    assert.equal(p3InProgress.total, 3);
+    assert.equal(p3InProgress.completed, 1);
+    assert.equal(p3InProgress.tracing, 1);
+    assert.equal(p3InProgress.waiting, 1);
+    assert.equal(p3InProgress.isFinished, false);
+    assert.equal(p3InProgress.summaryText, "COMPARE — 1/3 ROUTES COMPLETE");
+    assert.equal(p3InProgress.progressBadge, "1/3");
+
+    // 4 routes - all complete
+    const p4Done = calculateCompareProgress([
+      { id: "e1", status: "done" },
+      { id: "e2", status: "done" },
+      { id: "e3", status: "done" },
+      { id: "e4", status: "done" },
+    ]);
+    assert.equal(p4Done.total, 4);
+    assert.equal(p4Done.completed, 4);
+    assert.equal(p4Done.isFinished, true);
+    assert.equal(p4Done.summaryText, "COMPARE COMPLETE — 4/4 ROUTES");
+    assert.equal(p4Done.progressBadge, "4/4");
+
+    // 5 routes - 4 complete, 1 failed
+    const p5Mixed = calculateCompareProgress([
+      { id: "e1", status: "done" },
+      { id: "e2", status: "done" },
+      { id: "e3", status: "done" },
+      { id: "e4", status: "done" },
+      { id: "e5", status: "error" },
+    ]);
+    assert.equal(p5Mixed.total, 5);
+    assert.equal(p5Mixed.completed, 4);
+    assert.equal(p5Mixed.failed, 1);
+    assert.equal(p5Mixed.isFinished, true);
+    assert.equal(p5Mixed.summaryText, "COMPARE COMPLETE — 4/5 ROUTES (1 FAILED)");
+    assert.equal(p5Mixed.progressBadge, "4/5");
+
+    // 6 routes - live in-progress state (4 complete, 2 tracing)
+    const p6Live = calculateCompareProgress([
+      { id: "e1", status: "done" },
+      { id: "e2", status: "done" },
+      { id: "e3", status: "done" },
+      { id: "e4", status: "done" },
+      { id: "e5", status: "tracing…" },
+      { id: "e6", status: "tracing…" },
+    ]);
+    assert.equal(p6Live.total, 6);
+    assert.equal(p6Live.completed, 4);
+    assert.equal(p6Live.tracing, 2);
+    assert.equal(p6Live.isFinished, false);
+    assert.equal(p6Live.summaryText, "COMPARE — 4/6 ROUTES COMPLETE");
+    assert.equal(p6Live.progressBadge, "4/6");
   });
 
   test("backend preserves MAX_CONCURRENT_TRACES = 6", () => {
