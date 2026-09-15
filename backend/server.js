@@ -8,14 +8,6 @@ import { ENDPOINTS, findEndpoint } from "./src/endpoints.js";
 import { runTraceroute, killChildProcess, terminateAllTraces } from "./src/traceRunner.js";
 import { geolocate } from "./src/geolocate.js";
 import { initSse, sendSse, startHeartbeat } from "./src/sse.js";
-import {
-  getAuthStatus,
-  setupPassword,
-  verifyPassword,
-  lockSession,
-  resetAuth,
-  getDefaultAuthFilePath,
-} from "./src/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -159,42 +151,11 @@ export function createApp(options = {}) {
   app.use(cors());
   app.use(express.json());
 
-  const authFilePath = options.authFilePath || getDefaultAuthFilePath(options.userDataDir);
-
   let activeTraceCount = 0;
 
   // Health check endpoint for readiness probing
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
-  });
-
-  // Authentication endpoints
-  app.get("/api/auth/status", (_req, res) => {
-    res.json(getAuthStatus(authFilePath));
-  });
-
-  app.post("/api/auth/setup", (req, res) => {
-    const { password } = req.body || {};
-    const result = setupPassword(password, { filePath: authFilePath });
-    if (!result.success) return res.status(400).json(result);
-    res.json(result);
-  });
-
-  app.post("/api/auth/unlock", (req, res) => {
-    const { password } = req.body || {};
-    const result = verifyPassword(password, { filePath: authFilePath });
-    if (!result.success) return res.status(401).json(result);
-    res.json(result);
-  });
-
-  app.post("/api/auth/lock", (_req, res) => {
-    const result = lockSession();
-    res.json(result);
-  });
-
-  app.post("/api/auth/reset", (_req, res) => {
-    const result = resetAuth({ filePath: authFilePath });
-    res.json(result);
   });
 
   // Endpoints list
@@ -207,13 +168,6 @@ export function createApp(options = {}) {
     const { target } = req.params;
     const endpoint = findEndpoint(target);
     const rawHost = endpoint ? endpoint.host : req.query.host || target;
-
-    // Enforce authentication if setup
-    const authStatus = getAuthStatus(authFilePath);
-    if (authStatus.isSetup && !authStatus.isUnlocked) {
-      res.status(401).json({ error: "FinTrace is locked. Please unlock the application to initiate traces." });
-      return;
-    }
 
     const validation = await validateTargetAsync(rawHost);
     if (!validation.valid) {
