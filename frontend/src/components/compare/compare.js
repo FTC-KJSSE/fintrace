@@ -90,6 +90,82 @@ export function formatRankLabel(rank) {
 }
 
 /**
+ * Normalizes trace status into clear, user-facing state labels:
+ * WAITING, TRACING, COMPLETE, TIMEOUT, FAILED
+ */
+export function formatCompareStatus(status) {
+  if (!status || status === "waiting" || status === "idle") return "WAITING";
+  const s = String(status).toLowerCase();
+  if (s.startsWith("tracing")) return "TRACING";
+  if (s === "done" || s === "complete") return "COMPLETE";
+  if (s.includes("timeout") || s.includes("timed out")) return "TIMEOUT";
+  if (s.includes("error") || s.includes("fail") || s.includes("reject")) return "FAILED";
+  return status.toUpperCase();
+}
+
+/**
+ * Derives aggregate progress metrics from compare entries.
+ * Returns { total, completed, tracing, waiting, failed, isFinished, summaryText, progressBadge }
+ */
+export function calculateCompareProgress(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return {
+      total: 0,
+      completed: 0,
+      tracing: 0,
+      waiting: 0,
+      failed: 0,
+      isFinished: false,
+      summaryText: "",
+      progressBadge: "0/0",
+    };
+  }
+
+  const total = entries.length;
+  let completed = 0;
+  let tracing = 0;
+  let waiting = 0;
+  let failed = 0;
+
+  entries.forEach((e) => {
+    const s = formatCompareStatus(e.status);
+    if (s === "COMPLETE") {
+      completed++;
+    } else if (s === "TRACING") {
+      tracing++;
+    } else if (s === "WAITING") {
+      waiting++;
+    } else {
+      failed++;
+    }
+  });
+
+  const isFinished = completed + failed === total;
+  let summaryText = "";
+  if (isFinished) {
+    summaryText =
+      failed > 0
+        ? `COMPARE COMPLETE — ${completed}/${total} ROUTES (${failed} FAILED)`
+        : `COMPARE COMPLETE — ${completed}/${total} ROUTES`;
+  } else {
+    summaryText = `COMPARE — ${completed}/${total} ROUTES COMPLETE`;
+  }
+
+  const progressBadge = `${completed}/${total}`;
+
+  return {
+    total,
+    completed,
+    tracing,
+    waiting,
+    failed,
+    isFinished,
+    summaryText,
+    progressBadge,
+  };
+}
+
+/**
  * Builds interactive compare slot selectors (2 to 6 slots) with duplicate prevention.
  */
 export function buildCompareSlots(container, endpoints, initialCount = 3) {
@@ -127,6 +203,9 @@ export function buildCompareSlots(container, endpoints, initialCount = 3) {
       const select = document.createElement("select");
       select.className = "compare-slot";
       select.dataset.slot = String(idx);
+      select.name = `compare-target-${idx + 1}`;
+      select.id = `compare-target-${idx + 1}`;
+      select.setAttribute("aria-label", `Compare target ${idx + 1}`);
       select.style.borderColor = COMPARE_COLORS[idx] || "#8e959d";
 
       endpoints.forEach((ep) => {
@@ -203,10 +282,12 @@ export function renderCompareCards(container, entries) {
   const cardsHtml = entries
     .map((e) => {
       const rank = rankMap.get(e.id);
+      const displayStatus = formatCompareStatus(e.status);
+      const statusClass = `status-${displayStatus.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
       const rankBadge = rank
         ? `<span class="card-rank-tag rank-${rank}">${formatRankLabel(rank)}</span>`
-        : `<span class="card-rank-tag pending">Evaluating…</span>`;
-      const rttText = e.rttMs != null ? `${e.rttMs} ms` : e.status ?? "…";
+        : `<span class="card-rank-tag pending">${displayStatus === "TRACING" ? "Tracing…" : displayStatus === "WAITING" ? "Waiting…" : "Evaluating…"}</span>`;
+      const rttText = e.rttMs != null ? `${e.rttMs} ms` : (displayStatus === "WAITING" ? "—" : displayStatus);
       const tier = e.rttMs != null ? latencyTier(e.rttMs) : "timeout";
 
       return `
@@ -224,7 +305,7 @@ export function renderCompareCards(container, entries) {
           </div>
           <div class="compare-card-footer">
             <span>Hops: ${e.hopCount ?? 0}</span>
-            <span>Status: ${e.status ?? "idle"}</span>
+            <span class="compare-card-status ${statusClass}">Status: <strong>${displayStatus}</strong></span>
           </div>
         </div>
       `;

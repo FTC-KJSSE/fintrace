@@ -1,13 +1,14 @@
 .compare-slots {
   display: flex;
-  gap: 8px;
+  gap: 8px 10px;
   flex-wrap: wrap;
   align-items: center;
+  flex: 1 1 auto;
 }
 
 .compare-slots-row {
   display: flex;
-  gap: 8px;
+  gap: 8px 10px;
   flex-wrap: wrap;
   align-items: center;
 }
@@ -16,19 +17,32 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .compare-slot {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   color: var(--text-primary);
-  background: var(--bg-card);
+  background-color: var(--bg-card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='%2394a3b8' d='M0 0l4 4 4-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
   border: 1px solid var(--border-accent);
   border-radius: 6px;
-  padding: 6px 24px 6px 10px;
-  min-width: 140px;
+  padding: 6px 26px 6px 10px;
+  min-width: 135px;
   max-width: 175px;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.compare-slot-wrapper:has(.slot-remove-btn) .compare-slot {
+  padding-right: 40px;
+  background-position: right 24px center;
 }
 
 .compare-slot:focus {
@@ -36,9 +50,14 @@
   border-color: var(--accent-amber);
 }
 
+.compare-slot option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
 .compare-slot option:disabled {
   color: var(--text-muted);
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.8);
 }
 
 .slot-remove-btn {
@@ -51,15 +70,20 @@
   color: var(--text-muted);
   font-size: 1rem;
   line-height: 1;
-  padding: 2px 4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   border-radius: 3px;
+  z-index: 2;
   transition: color var(--transition-fast), background var(--transition-fast);
 }
 
 .slot-remove-btn:hover {
   color: #ef4444;
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .slot-add-btn {
@@ -73,8 +97,10 @@
   background: var(--bg-surface);
   border: 1px dashed var(--border-accent);
   border-radius: 6px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
 }
 
@@ -87,9 +113,15 @@
 .slot-count-tag {
   font-size: 0.66rem;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 1px 4px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
   border-radius: 3px;
+  white-space: nowrap;
+}
+
+#compare-cards-container {
+  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .compare-cards-grid {
@@ -100,13 +132,23 @@
 }
 
 .compare-cards-grid.count-4 {
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
 }
 
 .compare-cards-grid.count-5,
 .compare-cards-grid.count-6 {
-  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
   gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .compare-cards-grid,
+  .compare-cards-grid.count-4,
+  .compare-cards-grid.count-5,
+  .compare-cards-grid.count-6 {
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 8px;
+  }
 }
 
 .compare-card {
@@ -118,6 +160,7 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .compare-cards-grid.count-5 .compare-card,
@@ -248,10 +291,44 @@
 .compare-card-footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
   font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--text-muted);
   border-top: 1px solid var(--border-subtle);
   padding-top: 6px;
+}
+
+/* Compare Status Tags */
+.compare-card-status {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.compare-card-status.status-waiting strong {
+  color: var(--text-muted);
+}
+
+.compare-card-status.status-tracing strong {
+  color: var(--accent-amber);
+  animation: pulse-status 1.8s infinite ease-in-out;
+}
+
+.compare-card-status.status-complete strong {
+  color: var(--latency-low);
+}
+
+.compare-card-status.status-failed strong,
+.compare-card-status.status-timeout strong {
+  color: var(--latency-high);
+}
+
+@keyframes pulse-status {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; text-shadow: 0 0 6px rgba(240, 168, 48, 0.4); }
 }
 

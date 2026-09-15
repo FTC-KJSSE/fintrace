@@ -2,7 +2,7 @@
   background: radial-gradient(circle at center, #101928 0%, #080d17 100%);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  min-height: 520px;
+  min-height: clamp(400px, 48vh, 560px);
   height: 100%;
   position: relative;
   overflow: hidden;
@@ -22,6 +22,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   pointer-events: none;
   z-index: 10;
 }
