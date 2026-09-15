@@ -1,6 +1,7 @@
 import { latencyTier, TIER_COLOR } from "../../lib/latency.js";
 import { renderSparkline } from "../../lib/sparkline.js";
 import { haversineDistanceKm } from "../../lib/geoMath.js";
+import { formatCompareStatus } from "../compare/compare.js";
 
 export class HopPanel {
   constructor(tableEl, titleEl, subtitleEl = null) {
@@ -138,14 +139,20 @@ export class HopPanel {
       .map((entry) => {
         const rank = rankMap.get(entry.id);
         const rankBadge = rank ? `<span class="compare-rank-badge rank-${rank}">#${rank}</span>` : "";
-        const rttLabel = entry.rttMs != null ? `${entry.rttMs} ms` : entry.status ?? "…";
+        const displayStatus = formatCompareStatus(entry.status);
+        const statusClass = `status-${displayStatus.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+        const statusBadge = `<span class="compare-status-badge ${statusClass}">${displayStatus}</span>`;
+        const rttLabel = entry.rttMs != null ? `${entry.rttMs} ms` : (displayStatus === "WAITING" ? "—" : displayStatus);
         const tier = entry.rttMs != null ? latencyTier(entry.rttMs) : "timeout";
 
         return `
           <div class="hop-row compare-row reveal visible">
             <span class="hop-index">${rankBadge}</span>
             <div class="hop-meta">
-              <span class="hop-ip" style="color:${entry.color}">${entry.label}</span>
+              <div class="hop-ip-line">
+                <span class="hop-ip" style="color:${entry.color}">${entry.label}</span>
+                ${statusBadge}
+              </div>
               <span class="hop-location">${entry.host}</span>
             </div>
             <div class="hop-rtt-wrap">
