@@ -103,7 +103,6 @@ class RouteTracker {
     if (!route) return;
     route.isFinalized = true;
     this._rebuildRouteData(targetId);
-    this._logTelemetry(targetId);
   }
 
   _rebuildRouteData(targetId) {
@@ -179,26 +178,6 @@ class RouteTracker {
       }
     }
     route.arcs = arcs;
-  }
-
-  _logTelemetry(targetId) {
-    const route = this.routes.get(targetId);
-    if (!route) return;
-
-    console.group(`[FinTrace Telemetry] Endpoint: ${route.id} (${route.endpoint?.label || "Custom"})`);
-    console.log(`Slot: ${route.slotIndex} | Route Color: ${route.color || "Latency-based"}`);
-    console.log(`Total Hops: ${route.hops.length} | Geolocated Points: ${route.geoSequence.length}`);
-    console.log(
-      `Geo Sequence:`,
-      route.geoSequence.map((p) => `#${p.hopIndex} ${p.city} [${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}]${p.isDestination ? " (DEST)" : ""}`)
-    );
-    console.log(`Generated Arcs: ${route.arcs.length}`);
-    route.arcs.forEach((a, i) => {
-      console.log(
-        `  Arc ${i + 1}: [${a.startLat.toFixed(4)}, ${a.startLng.toFixed(4)}] -> [${a.endLat.toFixed(4)}, ${a.endLng.toFixed(4)}] | Alt: ${a.altitude.toFixed(3)} | Color: ${a.color}`
-      );
-    });
-    console.groupEnd();
   }
 
   getAllArcs() {

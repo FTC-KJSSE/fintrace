@@ -105,7 +105,8 @@
 
 .compare-cards-grid.count-5,
 .compare-cards-grid.count-6 {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 10px;
 }
 
 .compare-card {
@@ -116,6 +117,13 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+}
+
+.compare-cards-grid.count-5 .compare-card,
+.compare-cards-grid.count-6 .compare-card {
+  padding: 10px;
+  gap: 6px;
 }
 
 .compare-card-header {
@@ -123,6 +131,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .compare-card-label {
@@ -132,15 +141,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .card-rank-tag {
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 4px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .card-rank-tag.rank-1 {
@@ -189,12 +201,19 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 6px;
+  min-width: 0;
 }
 
 .compare-card-rtt {
   font-family: var(--font-mono);
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 700;
+  flex-shrink: 0;
+}
+
+.compare-cards-grid.count-5 .compare-card-rtt,
+.compare-cards-grid.count-6 .compare-card-rtt {
+  font-size: 1.15rem;
 }
 
 .compare-card-rtt.low { color: var(--latency-low); }
@@ -209,12 +228,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  text-align: right;
 }
 
 .compare-card-spark-wrap {
   height: 26px;
   display: flex;
   align-items: center;
+  width: 100%;
+}
+
+.compare-card-spark-wrap svg {
+  width: 100%;
+  max-width: 100%;
+  height: 22px;
 }
 
 .compare-card-footer {
