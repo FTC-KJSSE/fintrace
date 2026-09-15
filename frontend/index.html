@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinTrace — Live Financial Network Latency Terminal</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23f0a830'/><path d='M30 50 L45 65 L70 35' stroke='%230a0f1a' stroke-width='10' fill='none' stroke-linecap='round'/></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,63 +17,64 @@
     <link rel="stylesheet" href="/src/components/ticker/ticker.css" />
     <link rel="stylesheet" href="/src/components/globe/globe.css" />
     <link rel="stylesheet" href="/src/components/panel/panel.css" />
-    <link rel="stylesheet" href="/src/components/legend/legend.css" />
     <link rel="stylesheet" href="/src/components/compare/compare.css" />
     <link rel="stylesheet" href="/src/components/analytics/analytics.css" />
-    <link rel="stylesheet" href="/src/components/auth/auth.css" />
   </head>
   <body>
     <!-- Top Telemetry Ticker Tape -->
     <div class="ticker-tape" id="ticker">
       <div class="ticker-track" id="ticker-track">
-        <!-- populated by ticker.js -->
+        <!-- Telemetry items injected dynamically -->
       </div>
     </div>
 
     <div class="app-container">
       <!-- Terminal Header / Command Bar -->
       <header class="terminal-header">
-        <div class="brand-section">
-          <div class="brand-title">Fin<span class="amber">Trace</span></div>
-          <div class="brand-subtitle">LIVE NETWORK LATENCY GLOBE — FINANCIAL INFRASTRUCTURE</div>
-        </div>
-
-        <div class="controls-section">
-          <!-- Single / Live Mode Controls -->
-          <div class="control-item" id="single-controls">
-            <span class="control-label">SELECT ENDPOINT</span>
-            <select class="endpoint-select" id="endpoint-select"></select>
+        <div class="terminal-header-primary">
+          <div class="brand-section">
+            <div class="brand-title">Fin<span class="amber">Trace</span></div>
+            <div class="brand-subtitle">LIVE NETWORK LATENCY GLOBE — FINANCIAL INFRASTRUCTURE</div>
           </div>
 
-          <!-- Compare Mode Controls -->
-          <div class="control-item compare-controls" id="compare-controls" hidden>
-            <span class="control-label">COMPARE (2–6 TARGETS)</span>
-            <div class="compare-slots" id="compare-slots"></div>
-          </div>
+          <div class="controls-section">
+            <!-- Single / Live Mode Controls -->
+            <div class="control-item" id="single-controls">
+              <span class="control-label">SELECT ENDPOINT</span>
+              <select class="endpoint-select" id="endpoint-select" aria-label="Select Endpoint"></select>
+            </div>
 
-          <!-- Mode Switcher -->
-          <div class="control-item">
-            <span class="control-label">MODE</span>
-            <div class="mode-pill-group">
-              <button class="mode-btn active" data-mode="single">Single</button>
-              <button class="mode-btn" data-mode="live">Live</button>
-              <button class="mode-btn" data-mode="compare">Compare</button>
+            <!-- Mode Switcher -->
+            <div class="control-item mode-control-item">
+              <span class="control-label">MODE</span>
+              <div class="mode-pill-group" role="tablist" aria-label="Operation Mode">
+                <button class="mode-btn active" data-mode="single" role="tab" aria-selected="true">Single</button>
+                <button class="mode-btn" data-mode="live" role="tab" aria-selected="false">Live</button>
+                <button class="mode-btn" data-mode="compare" role="tab" aria-selected="false">Compare</button>
+              </div>
+            </div>
+
+            <div class="status-action-section">
+              <div class="live-status-badge" id="live-status-badge" hidden>
+                <span class="status-indicator live">
+                  <span class="pulse-dot"></span>
+                  <span id="live-status-text">LIVE</span>
+                </span>
+                <span class="status-timer" id="live-timer-countdown">Next update in 30s</span>
+              </div>
+
+              <button class="run-btn" id="run-btn">Run Trace →</button>
+              <button class="run-btn" id="compare-run-btn" hidden>Compare →</button>
             </div>
           </div>
         </div>
 
-        <div class="status-action-section">
-          <div class="live-status-badge" id="live-status-badge" hidden>
-            <span class="status-indicator live">
-              <span class="pulse-dot"></span>
-              <span id="live-status-text">LIVE</span>
-            </span>
-            <span class="status-timer" id="live-timer-countdown">Next update in 30s</span>
+        <!-- Compare Mode Dedicated Sub-Bar (Full-width responsive slot targets) -->
+        <div class="compare-controls-bar" id="compare-controls" hidden>
+          <div class="compare-bar-label-group">
+            <span class="control-label">COMPARE (2–6 TARGETS)</span>
           </div>
-
-          <button class="run-btn" id="run-btn">Run Trace →</button>
-          <button class="run-btn" id="compare-run-btn" hidden>Compare →</button>
-          <button class="lock-btn" id="lock-btn" title="Lock FinTrace" aria-label="Lock Session">🔒 Lock</button>
+          <div class="compare-slots" id="compare-slots"></div>
         </div>
       </header>
 
@@ -158,11 +160,7 @@
           <span class="footer-version">FinTrace v1.0.0</span>
           <span class="footer-status-pill">
             <span class="status-dot"></span>
-            <span>Backend: :3001</span>
-          </span>
-          <span class="footer-status-pill">
-            <span class="status-dot"></span>
-            <span>Frontend: :5173</span>
+            <span>Local Engine Active</span>
           </span>
         </div>
         <div class="footer-right" id="footer-source-ip">
@@ -170,9 +168,6 @@
         </div>
       </footer>
     </div>
-
-    <!-- Local Authentication Overlay -->
-    <div id="auth-modal-overlay" class="auth-modal-overlay" hidden></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

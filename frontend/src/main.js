@@ -4,10 +4,16 @@ import { latencyTier, TIER_COLOR } from "./lib/latency.js";
 import { GlobeView } from "./components/globe/globe.js";
 import { HopPanel } from "./components/panel/panel.js";
 import { TickerBar } from "./components/ticker/ticker.js";
-import { buildCompareSlots, renderCompareCards, validateCompareTargets, COMPARE_COLORS } from "./components/compare/compare.js";
+import {
+  buildCompareSlots,
+  renderCompareCards,
+  validateCompareTargets,
+  calculateCompareProgress,
+  formatCompareStatus,
+  COMPARE_COLORS,
+} from "./components/compare/compare.js";
 import { deriveRouteMetrics } from "./lib/geoMath.js";
 import { AnalyticsSuite } from "./components/analytics/analytics.js";
-import { AuthModal } from "./components/auth/auth.js";
 
 const LIVE_INTERVAL_MS = 30_000;
 
@@ -35,8 +41,6 @@ const els = {
   hopRttChart: document.getElementById("hop-rtt-chart"),
   compareCardsContainer: document.getElementById("compare-cards-container"),
   footerSourceIp: document.getElementById("footer-source-ip"),
-  lockBtn: document.getElementById("lock-btn"),
-  authModalOverlay: document.getElementById("auth-modal-overlay"),
 };
 
 let endpoints = [];
@@ -369,9 +373,6 @@ function runCompareTrace(targetIds) {
   const selectedEndpoints = validTargets.map((id) => endpointById(id));
   globe.frameCompareView(selectedEndpoints);
 
-  els.panelTitle.textContent = `COMPARING ${validTargets.length} ENDPOINTS…`;
-  if (els.panelRttBadge) els.panelRttBadge.textContent = "…";
-
   const entries = validTargets.map((id, i) => {
     const endpoint = endpointById(id);
     const color = COMPARE_COLORS[i] || "#8e959d";
@@ -382,18 +383,33 @@ function runCompareTrace(targetIds) {
       host: endpoint?.host ?? id,
       color,
       rttMs: null,
-      status: "tracing…",
+      status: "waiting",
       hopCount: 0,
       history: [],
     };
   });
 
-  panel.showCompareSummary(entries);
-  renderCompareCards(els.compareCardsContainer, entries);
+  function updateCompareUI() {
+    const progress = calculateCompareProgress(entries);
+    els.panelTitle.textContent = progress.summaryText;
+    if (els.panelRttBadge) {
+      els.panelRttBadge.textContent = progress.progressBadge;
+      els.panelRttBadge.className = `panel-rtt-badge ${progress.isFinished ? "low" : "medium"}`;
+    }
+    panel.showCompareSummary(entries);
+    renderCompareCards(els.compareCardsContainer, entries);
+  }
+
+  updateCompareUI();
 
   validTargets.forEach((id, i) => {
     const source = openTrace(id, {
+      onStart: () => {
+        entries[i].status = "tracing";
+        updateCompareUI();
+      },
       onHop: (hop) => {
+        entries[i].status = "tracing";
         entries[i].hopCount++;
         if (hop.rttMs != null) {
           entries[i].rttMs = hop.rttMs;
@@ -405,8 +421,7 @@ function runCompareTrace(targetIds) {
         globe.setPoints(routeTracker.getAllPoints());
         globe.setDestinationRings(routeTracker.getAllDestinationRings());
 
-        panel.showCompareSummary(entries);
-        renderCompareCards(els.compareCardsContainer, entries);
+        updateCompareUI();
       },
       onDone: () => {
         routeTracker.finalizeRoute(id);
@@ -416,25 +431,15 @@ function runCompareTrace(targetIds) {
 
         entries[i].status = "done";
         if (entries[i].rttMs != null) updateDirectoryItemRtt(id, entries[i].rttMs);
-        panel.showCompareSummary(entries);
-        renderCompareCards(els.compareCardsContainer, entries);
-        checkCompareComplete(entries);
+        updateCompareUI();
       },
       onError: (err) => {
         entries[i].status = err.message ?? "error";
-        panel.showCompareSummary(entries);
-        renderCompareCards(els.compareCardsContainer, entries);
-        checkCompareComplete(entries);
+        updateCompareUI();
       },
     });
     activeSources.push(source);
   });
-}
-
-function checkCompareComplete(entries) {
-  if (entries.every((e) => e.status === "done" || (e.status && e.status !== "tracing…"))) {
-    els.panelTitle.textContent = "COMPARISON COMPLETE";
-  }
 }
 
 function currentSingleTarget() {
@@ -488,7 +493,12 @@ function setMode(nextMode) {
   els.compareRunBtn.hidden = !isCompare;
 
   if (els.hopRttChart) els.hopRttChart.hidden = isCompare;
+  if (els.timeSeriesChart) els.timeSeriesChart.hidden = isCompare;
   if (els.compareCardsContainer) els.compareCardsContainer.hidden = !isCompare;
+
+  if (!isCompare) {
+    if (els.compareCardsContainer) els.compareCardsContainer.innerHTML = "";
+  }
 
   els.runBtn.textContent = mode === "live" ? "Start Live →" : "Run Trace →";
   els.runBtn.classList.remove("stop");
@@ -603,14 +613,3 @@ fetchEndpoints()
     console.error("Failed to load endpoints:", err);
     els.panelTitle.textContent = "Could not reach FinTrace backend on :3001";
   });
-
-const authModal = new AuthModal(els.authModalOverlay);
-
-els.lockBtn?.addEventListener("click", () => {
-  stopLive();
-  closeActiveSources();
-  authModal.lock();
-});
-
-// Check local authentication state on startup
-authModal.checkAndPrompt();
