@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#05080f" />
+
+    <title>FinTrace — See the actual path your trades take</title>
+    <meta
+      name="description"
+      content="FinTrace is a Windows desktop application that runs a real tracert to stock exchanges, crypto APIs and cloud HFT regions, geolocates every hop offline, and renders the route on an interactive 3D globe."
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="FinTrace — See the actual path your trades take" />
+    <meta
+      property="og:description"
+      content="Real Windows tracert telemetry, offline IP geolocation, and 3D route visualisation for financial infrastructure. Free and open source."
+    />
+    <meta property="og:image" content="./icon.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FinTrace — See the actual path your trades take" />
+    <meta
+      name="twitter:description"
+      content="Real Windows tracert telemetry, offline IP geolocation, and 3D route visualisation for financial infrastructure."
+    />
+
+    <link rel="icon" type="image/png" href="./icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="./src/styles/tokens.css" />
+    <link rel="stylesheet" href="./src/styles/base.css" />
+    <link rel="stylesheet" href="./src/styles/components.css" />
+    <link rel="stylesheet" href="./src/styles/hero.css" />
+    <link rel="stylesheet" href="./src/styles/data.css" />
+    <link rel="stylesheet" href="./src/styles/download.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "FinTrace",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Windows 10, Windows 11",
+        "softwareVersion": "1.0.0",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Windows desktop application that traces and visualises the network route from your machine to financial infrastructure endpoints.",
+        "url": "https://github.com/FTC-KJSSE/fintrace"
+      }
+    </script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#hero">Skip to content</a>
+
+    <!-- Telemetry ticker tape — lifted from the application's own top strip -->
+    <div class="ticker" id="ticker" aria-hidden="true">
+      <div class="ticker-track" id="ticker-track"></div>
+    </div>
+
+    <header class="nav" id="nav">
+      <div class="container nav-inner">
+        <a class="brand" href="#hero" id="brand">
+          <span class="wordmark">Fin<span class="amber">Trace</span></span>
+        </a>
+        <nav class="nav-links" aria-label="Sections">
+          <a class="nav-link" href="#how">How it works</a>
+          <a class="nav-link" href="#endpoints">Endpoints</a>
+          <a class="btn btn--primary btn--sm" href="#download">Download</a>
+        </nav>
+      </div>
+      <div class="nav-progress" id="nav-progress"></div>
+    </header>
+
+    <main id="app">
+      <!-- ========== 1 · HERO ========== -->
+      <section class="hero" id="hero">
+        <div class="container hero-inner">
+          <div class="hero-globe" id="hero-globe" aria-hidden="true"></div>
+          <div class="hero-scrim" aria-hidden="true"></div>
+
+          <div class="hero-copy">
+            <span class="eyebrow">Windows desktop · v1.0.0</span>
+            <h1>See the actual path<br />your trades <span class="amber">take.</span></h1>
+            <p class="hero-sub">
+              FinTrace runs a real <strong>tracert</strong> from your machine to stock exchanges, crypto
+              APIs and cloud HFT regions, geolocates every hop <strong>offline</strong>, and draws the
+              route on an interactive 3D globe.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn--primary" href="#download">Download for Windows</a>
+              <a class="btn btn--ghost" href="https://github.com/FTC-KJSSE/fintrace" target="_blank" rel="noopener">View on GitHub</a>
+            </div>
+            <ul class="stat-strip" id="stat-strip"></ul>
+          </div>
+        </div>
+
+        <div class="scroll-cue" aria-hidden="true">
+          <span>Scroll</span>
+          <span class="scroll-cue-track"></span>
+        </div>
+      </section>
+
+      <!-- ========== 2 · HOW IT WORKS ========== -->
+      <section class="section how" id="how">
+        <div class="container">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">How it works</span>
+            <h2>A browser cannot run a traceroute.<br />So FinTrace <span class="amber">isn't one.</span></h2>
+            <p class="section-lead">
+              Traceroute needs a raw socket — a privilege the browser sandbox exists to withhold. So
+              FinTrace ships as a native binary, spawns your own <code class="mono">tracert</code>, and
+              reads the result line by line. The measurement is yours, taken on your connection.
+            </p>
+          </div>
+
+          <div class="how-grid">
+            <div class="how-main" data-reveal>
+              <div class="terminal">
+                <div class="terminal-bar">
+                  <span class="terminal-title mono">tracert -d <span class="amber" id="trace-host"></span></span>
+                  <span class="pill pill--live"><span class="pulse-dot"></span><span id="trace-status">Tracing</span></span>
+                </div>
+                <div class="hop-table" id="hop-table" role="table" aria-label="Traceroute hops"></div>
+              </div>
+
+              <dl class="stat-grid" id="route-stats"></dl>
+              <p class="caption">
+                Sample output. Timed-out hops are shown, not hidden — real routes have them. Every figure
+                above is computed from the table, not asserted.
+              </p>
+            </div>
+
+            <aside class="how-aside" data-reveal-group>
+              <div class="versus" data-reveal>
+                <div class="versus-col versus-col--cannot">
+                  <h4>A web page cannot</h4>
+                  <ul class="versus-list">
+                    <li><span class="glyph">✕</span><span>Open a raw ICMP socket</span></li>
+                    <li><span class="glyph">✕</span><span>Set a packet's TTL</span></li>
+                    <li><span class="glyph">✕</span><span>Spawn a system process</span></li>
+                  </ul>
+                </div>
+                <div class="versus-col versus-col--can">
+                  <h4>FinTrace does</h4>
+                  <ul class="versus-list">
+                    <li><span class="glyph">✓</span><span>Spawns native <code class="mono">tracert -d</code></span></li>
+                    <li><span class="glyph">✓</span><span>Geolocates hops offline</span></li>
+                    <li><span class="glyph">✓</span><span>Renders the route in 3D</span></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="card modes-note" data-reveal>
+                <h3>Three ways to run it</h3>
+                <dl>
+                  <div><dt>Single</dt><dd>One trace to one endpoint.</dd></div>
+                  <div><dt>Live</dt><dd>The same route re-fires every 30 seconds.</dd></div>
+                  <div><dt>Compare</dt><dd>Up to six endpoints at once, each in its own colour.</dd></div>
+                </dl>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 3 · ENDPOINTS ========== -->
+      <section class="section" id="endpoints">
+        <div class="container">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">What you can trace</span>
+            <h2>Nine curated targets. Or any host you like.</h2>
+            <p class="section-lead">
+              Hover a card to isolate its route on the globe. Destination coordinates are approximate
+              landmark locations, not server-rack coordinates — those aren't public.
+            </p>
+          </div>
+
+          <div class="directory-stage">
+            <div class="directory-globe" data-reveal>
+              <span class="pill globe-tag" id="dir-tag">All nine routes</span>
+              <div class="globe-mount" id="dir-globe"></div>
+            </div>
+            <div class="endpoint-grid" id="endpoint-grid" data-reveal-group></div>
+          </div>
+
+          <div class="card custom-host" data-reveal>
+            <div class="custom-host-copy">
+              <h3>Custom host or IP</h3>
+              <p>Trace anything reachable — a broker's API, your own colo box, a DNS resolver.</p>
+            </div>
+            <div class="host-field"><span id="host-demo">1.1.1.1</span><span class="caret">▌</span></div>
+          </div>
+
+          <ul class="trust-row" id="trust-row" data-reveal></ul>
+        </div>
+      </section>
+
+      <!-- ========== 4 · DOWNLOAD ========== -->
+      <section class="section download" id="download">
+        <div class="container">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">Download</span>
+            <h2>Free, open source, one release.</h2>
+            <p class="section-lead">
+              Two Windows x64 builds. Pick the installer for a normal setup, or the portable
+              executable if you'd rather not install anything.
+            </p>
+          </div>
+
+          <div class="dl-grid" id="dl-grid" data-reveal-group></div>
+          <dl class="dl-meta" id="dl-meta" data-reveal></dl>
+
+          <div class="notice" data-reveal id="smartscreen"></div>
+
+          <p class="build-from-source" data-reveal>
+            On macOS or Linux? There is no prebuilt binary yet — clone the repo and run
+            <code>npm install &amp;&amp; npm run electron:dev</code>. The trace uses
+            <code>traceroute -n</code> on those platforms.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" id="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a class="brand" href="#hero">
+              <span class="wordmark">Fin<span class="amber">Trace</span></span>
+            </a>
+            <p>
+              A Windows desktop application for tracing and visualising the network route between your
+              machine and financial infrastructure.
+            </p>
+            <span class="pill">MIT · Open source</span>
+          </div>
+
+          <div class="footer-col">
+            <h4>Product</h4>
+            <ul>
+              <li><a href="#how">How it works</a></li>
+              <li><a href="#endpoints">Endpoints</a></li>
+              <li><a href="#download">Download</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Source</h4>
+            <ul>
+              <li><a href="https://github.com/FTC-KJSSE/fintrace" target="_blank" rel="noopener">Repository</a></li>
+              <li><a href="https://github.com/FTC-KJSSE/fintrace/releases" target="_blank" rel="noopener">Releases</a></li>
+              <li><a href="https://github.com/FTC-KJSSE/fintrace/issues" target="_blank" rel="noopener">Issues</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Our committee</h4>
+            <ul>
+              <li><a href="https://ftc-kjsse.vercel.app/" target="_blank" rel="noopener">FTC KJSSE</a></li>
+              <li><a href="https://github.com/FTC-KJSSE/" target="_blank" rel="noopener">GitHub</a></li>
+              <li><a href="https://www.linkedin.com/company/ftc-kjsse/" target="_blank" rel="noopener">LinkedIn</a></li>
+              <li><a href="mailto:ftc.kjsse@somaiya.edu">ftc.kjsse@somaiya.edu</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Built with</h4>
+            <ul>
+              <li><a href="https://threejs.org" target="_blank" rel="noopener">Three.js</a></li>
+              <li><a href="https://github.com/vasturiano/three-globe" target="_blank" rel="noopener">three-globe</a></li>
+              <li><a href="https://www.electronjs.org" target="_blank" rel="noopener">Electron</a></li>
+              <li><a href="https://vite.dev" target="_blank" rel="noopener">Vite</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <ul class="footer-meta" id="footer-meta"></ul>
+
+        <div class="footer-legal">
+          <span>IP Geolocation by <a href="https://db-ip.com" target="_blank" rel="noopener">DB-IP</a>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</span>
+          <span>© 2026 FinTrace · Built by <a href="https://ftc-kjsse.vercel.app/" target="_blank" rel="noopener">FTC KJSSE</a>. Not affiliated with any exchange or data provider listed.</span>
+        </div>
+      </div>
+    </footer>
+
+    <noscript>
+      <div style="padding:24px;text-align:center;color:#b7bdc4;font-family:monospace">
+        This page renders its globe and data tables with JavaScript. Downloads are available directly at
+        <a href="https://github.com/FTC-KJSSE/fintrace/releases">github.com/FTC-KJSSE/fintrace/releases</a>.
+      </div>
+    </noscript>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

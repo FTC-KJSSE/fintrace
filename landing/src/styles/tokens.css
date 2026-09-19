@@ -1,0 +1,91 @@
+/* ---------------------------------------------------------------------------
+   Design tokens.
+
+   Hues are inherited wholesale from the application's own stylesheet
+   (frontend/src/styles/base.css). The background ladder is dropped roughly one
+   step darker and given a cooler undertone so the globe and the amber accent
+   sit on a deeper field; every other value is unchanged. Amber remains the one
+   brand colour. Latency and route colours are semantic and are never used
+   decoratively.
+--------------------------------------------------------------------------- */
+
+:root {
+  /* Backgrounds — deeper than the app's, same navy family */
+  --bg-primary: #05080f;
+  --bg-secondary: #0a0f1a;
+  --bg-surface: #101825;
+  --bg-card: #141d2c;
+  --bg-card-hover: #1c2739;
+  --bg-inset: #070b12;
+
+  /* Brand accent — amber */
+  --accent-amber: #f0a830;
+  --accent-amber-light: #ffc35c;
+  --accent-amber-deep: #b8780c;
+  --accent-amber-dim: rgba(240, 168, 48, 0.12);
+  --accent-amber-line: rgba(240, 168, 48, 0.3);
+
+  /* Latency scale — fixed semantic meaning */
+  --latency-low: #22c55e;
+  --latency-medium: #f0a830;
+  --latency-high: #ef4444;
+  --latency-timeout: #8e959d;
+
+  /* Compare-mode route identity, in assignment order */
+  --route-1: #38bdf8;
+  --route-2: #a78bfa;
+  --route-3: #f472b6;
+  --route-4: #f0a830;
+  --route-5: #34d399;
+  --route-6: #fb923c;
+
+  /* Logo teal */
+  --logo-outer: #2ee6a8;
+  --logo-mid: #2b9ff5;
+
+  /* Text */
+  --text-primary: #e8eaed;
+  --text-secondary: #b7bdc4;
+  --text-muted: #8e959d;
+  --text-faint: #5b636d;
+  --text-link: #8ab4f8;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --hairline: rgba(255, 255, 255, 0.07);
+
+  /* Fonts */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Space Mono", "Fira Code", ui-monospace, monospace;
+
+  /* Layout */
+  --container-max: 1200px;
+  --gutter: 24px;
+  --nav-h: 58px;
+  --ticker-h: 34px;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms var(--ease-out-expo);
+  --transition-slow: 600ms var(--ease-out-expo);
+
+  /* Elevation — restrained. No neon glow, no bloom. */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lift: 0 16px 44px rgba(0, 0, 0, 0.55);
+
+  /* Radii */
+  --r-card: 12px;
+  --r-sm: 8px;
+  --r-btn: 6px;
+  --r-pill: 999px;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --gutter: 18px;
+    --nav-h: 54px;
+  }
+}
