@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1420" height="360" viewBox="0 0 1420 360" role="img" aria-label="FinTrace product capability cards">
+<defs><linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1b1717"/><stop offset="1" stop-color="#0b0d11"/></linearGradient><linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb674"/><stop offset="1" stop-color="#f15d20"/></linearGradient></defs><rect width="1420" height="360" rx="22" fill="#080a0e"/>
+<g font-family="Arial,sans-serif" font-weight="700" fill="#f2efea">
+<rect x="35" y="34" width="427" height="291" rx="22" fill="url(#panel)" stroke="#74452b"/>
+<circle cx="108" cy="109" r="38" stroke="url(#ring)" fill="none" stroke-width="3"/><ellipse cx="108" cy="109" rx="16" ry="37" stroke="#ffb079" fill="none" opacity=".85"/><path d="M70 109H146" stroke="#ffb079" opacity=".6"/>
+<text x="73" y="195" font-size="28">Globe-first exploration</text><text x="73" y="230" font-size="17" font-weight="400" fill="#aca2a0">Geolocated network paths rendered</text><text x="73" y="255" font-size="17" font-weight="400" fill="#aca2a0">as interactive 3D arcs.</text>
+<rect x="496" y="34" width="427" height="291" rx="22" fill="url(#panel)" stroke="#74452b"/>
+<g stroke="#ffa15e" fill="none" stroke-width="3"><path d="M538 137L563 108L588 125L614 83L649 97"/><path d="M538 91H650" stroke-width="1" opacity=".2"/></g>
+<text x="536" y="195" font-size="28">Live telemetry</text><text x="536" y="230" font-size="17" font-weight="400" fill="#aca2a0">Stream parsed hops and measured</text><text x="536" y="255" font-size="17" font-weight="400" fill="#aca2a0">round-trip times with SSE.</text>
+<rect x="957" y="34" width="428" height="291" rx="22" fill="url(#panel)" stroke="#74452b"/>
+<g fill="none" stroke="#ff9c58" stroke-width="3"><rect x="998" y="79" width="54" height="55" rx="8"/><rect x="1065" y="95" width="54" height="39" rx="8"/><rect x="1132" y="67" width="54" height="67" rx="8"/></g>
+<text x="998" y="195" font-size="28">Compare infrastructure</text><text x="998" y="230" font-size="17" font-weight="400" fill="#aca2a0">Investigate 2–6 targets in parallel,</text><text x="998" y="255" font-size="17" font-weight="400" fill="#aca2a0">then compare RTT and route stats.</text>
+</g></svg>
