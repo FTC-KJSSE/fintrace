@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1420" height="680" viewBox="0 0 1420 680" role="img" aria-label="FinTrace architecture with traceroute worker, geolocation pipeline, SSE and Three.js 3D client">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0b0d12"/><stop offset="1" stop-color="#121116"/></linearGradient>
+  <linearGradient id="line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f26621"/><stop offset="1" stop-color="#f6b369"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6" fill="none" stroke="#fa9c52" stroke-width="1.7"/></marker>
+  <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" stroke="#59361f" stroke-width=".7" opacity=".27" fill="none"/></pattern>
+</defs>
+<rect width="1420" height="680" rx="24" fill="url(#bg)"/>
+<rect width="1420" height="680" rx="24" fill="url(#grid)"/>
+<text x="62" y="69" font-family="Arial,sans-serif" font-size="29" font-weight="700" fill="#f7f4ef">System architecture</text>
+<text x="62" y="100" font-family="monospace" font-size="14" fill="#f09a5a">LOCAL TELEMETRY ENGINE / EVENT STREAM / 3D VISUALIZATION</text>
+<!-- columns -->
+<g font-family="Arial,sans-serif">
+<rect x="66" y="170" width="278" height="135" rx="16" fill="#191921" stroke="#d66d2e" stroke-width="1.5"/>
+<rect x="66" y="170" width="6" height="135" rx="3" fill="#ff8e40"/>
+<text x="91" y="204" font-size="14" fill="#fd9b51">01 / TARGET REQUEST</text>
+<text x="91" y="245" font-size="25" font-weight="700" fill="#f5f0e9">Desktop / Browser</text>
+<text x="91" y="272" font-size="16" fill="#a8a5a7">Select exchange or host</text>
+<rect x="399" y="170" width="280" height="135" rx="16" fill="#191921" stroke="#8d5840" stroke-width="1.4"/>
+<text x="423" y="204" font-size="14" fill="#fd9b51">02 / TRACE WORKER</text>
+<text x="423" y="245" font-size="25" font-weight="700" fill="#f5f0e9">Node.js + OS</text>
+<text x="423" y="272" font-size="16" fill="#a8a5a7">tracert / traceroute</text>
+<rect x="735" y="170" width="280" height="135" rx="16" fill="#191921" stroke="#8d5840" stroke-width="1.4"/>
+<text x="759" y="204" font-size="14" fill="#fd9b51">03 / IP ENRICHMENT</text>
+<text x="759" y="245" font-size="25" font-weight="700" fill="#f5f0e9">Geolocation</text>
+<text x="759" y="272" font-size="16" fill="#a8a5a7">MMDB / cached fallback</text>
+<rect x="1070" y="170" width="280" height="135" rx="16" fill="#191921" stroke="#d66d2e" stroke-width="1.5"/>
+<rect x="1344" y="170" width="6" height="135" rx="3" fill="#ff8e40"/>
+<text x="1095" y="204" font-size="14" fill="#fd9b51">04 / EVENT TRANSPORT</text>
+<text x="1095" y="245" font-size="25" font-weight="700" fill="#f5f0e9">SSE Stream</text>
+<text x="1095" y="272" font-size="16" fill="#a8a5a7">start → hop → done</text>
+</g>
+<path d="M345 237H392" fill="none" stroke="url(#line)" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M680 237H728" fill="none" stroke="url(#line)" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M1016 237H1063" fill="none" stroke="url(#line)" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M1210 306V361H1045" fill="none" stroke="url(#line)" stroke-width="2" marker-end="url(#arrow)"/>
+<g font-family="Arial,sans-serif">
+<rect x="717" y="366" width="624" height="157" rx="18" fill="#241a17" stroke="#fa9342" stroke-width="1.5"/>
+<text x="750" y="403" font-family="monospace" font-size="14" fill="#ff9c4e">05 / INTERACTIVE CLIENT</text>
+<text x="750" y="449" font-size="29" font-weight="700" fill="#fcf3e9">Three.js + three-globe</text>
+<text x="750" y="480" font-size="17" fill="#bcb5b0">Animated geolocated arcs  ·  hop panel  ·  analytics</text>
+<rect x="75" y="367" width="567" height="157" rx="18" fill="#191921" stroke="#81543b" stroke-width="1.4"/>
+<text x="107" y="403" font-family="monospace" font-size="14" fill="#ff9c4e">DESKTOP RUNTIME</text>
+<text x="107" y="450" font-size="29" font-weight="700" fill="#fcf3e9">Electron 44</text>
+<text x="107" y="480" font-size="17" fill="#bcb5b0">Local Express API  ·  ephemeral port  ·  secure renderer</text>
+<rect x="66" y="567" width="1288" height="59" rx="12" fill="#1c1716" stroke="#593820" stroke-width="1"/>
+<text x="92" y="602" font-size="17" fill="#eed6c1">TRUTH BOUNDARY</text>
+<text x="292" y="602" font-size="16" fill="#bfb9b7">Observed RTT ≠ trade-execution latency · Geolocation ≠ physical fiber route</text>
+</g>
+</svg>
